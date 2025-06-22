@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\AttendanceController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Student\StudentController;
 use App\Http\Controllers\Teacher\TeacherDashboardController;
+use App\Http\Controllers\Teacher\TeacherLessonController;
 use App\Http\Controllers\QRCodeController;
 
 Route::get('/', function () {
@@ -53,6 +54,21 @@ Route::prefix('admin')->group(function () {
 // Teacher Routes
 Route::middleware('teacher')->group(function () {
     Route::get('/teacher/dashboard', [TeacherDashboardController::class, 'dashboard'])->name('teacher.dashboard');
+    
+    // Teacher Lesson Management
+    Route::resource('/teacher/lessons', TeacherLessonController::class, [
+        'as' => 'teacher'
+    ]);
+    Route::get('/teacher/lessons/{lesson}/manage-students', [TeacherLessonController::class, 'manageStudents'])
+        ->name('teacher.lessons.manage-students');
+    Route::post('/teacher/lessons/{lesson}/add-student', [TeacherLessonController::class, 'addStudent'])
+        ->name('teacher.lessons.add-student');
+    Route::delete('/teacher/lessons/{lesson}/remove-student/{student}', [TeacherLessonController::class, 'removeStudent'])
+        ->name('teacher.lessons.remove-student');
+    Route::delete('/teacher/lessons/{lesson}/remove-students', [TeacherLessonController::class, 'removeStudents'])
+        ->name('teacher.lessons.remove-students');
+    Route::delete('/teacher/lessons/{lesson}/remove-all-students', [TeacherLessonController::class, 'removeAllStudents'])
+        ->name('teacher.lessons.remove-all-students');
     
     // Teacher Attendance Management (view only for lessons they teach)
     Route::get('/teacher/attendances', [AttendanceController::class, 'index'])->name('teacher.attendances.index');

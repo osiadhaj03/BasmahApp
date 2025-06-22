@@ -90,12 +90,16 @@
                            href="{{ route('admin.attendances.index') }}">
                             <i class="fas fa-clipboard-check me-2"></i>
                             الحضور
-                        </a>
-                    @elseif(auth()->user()->role === 'teacher')
+                        </a>                    @elseif(auth()->user()->role === 'teacher')
                         <a class="nav-link {{ request()->routeIs('teacher.dashboard') ? 'active' : '' }}" 
                            href="{{ route('teacher.dashboard') }}">
                             <i class="fas fa-tachometer-alt me-2"></i>
                             لوحة التحكم
+                        </a>
+                        <a class="nav-link {{ request()->routeIs('teacher.lessons.*') ? 'active' : '' }}" 
+                           href="{{ route('teacher.lessons.index') }}">
+                            <i class="fas fa-book me-2"></i>
+                            إدارة دروسي
                         </a>
                         <a class="nav-link {{ request()->routeIs('teacher.attendances.*') ? 'active' : '' }}" 
                            href="{{ route('teacher.attendances.index') }}">
@@ -106,11 +110,6 @@
                            href="{{ route('teacher.attendances.create') }}">
                             <i class="fas fa-plus me-2"></i>
                             تسجيل حضور فردي
-                        </a>
-                        <a class="nav-link {{ request()->routeIs('teacher.attendances.bulk') ? 'active' : '' }}" 
-                           href="{{ route('teacher.attendances.bulk') }}">
-                            <i class="fas fa-list-check me-2"></i>
-                            تسجيل حضور جماعي
                         </a>
                     @endif
                 </nav>

@@ -4,8 +4,7 @@
 
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3 mb-0">تسجيل حضور جديد</h1>
-    <a href="{{ route('admin.attendances.index') }}" class="btn btn-secondary">
+    <h1 class="h3 mb-0">تسجيل حضور جديد</h1>    <a href="{{ auth()->user()->role === 'teacher' ? route('teacher.attendances.index') : route('admin.attendances.index') }}" class="btn btn-secondary">
         <i class="fas fa-arrow-left me-2"></i>
         العودة لسجلات الحضور
     </a>
@@ -13,7 +12,7 @@
 
 <div class="card">
     <div class="card-body">
-        <form method="POST" action="{{ route('admin.attendances.store') }}">
+        <form method="POST" action="{{ auth()->user()->role === 'teacher' ? route('teacher.attendances.store') : route('admin.attendances.store') }}">>
             @csrf
             
             <div class="row">
@@ -85,8 +84,7 @@
                 </div>
             </div>
 
-            <div class="d-flex justify-content-between">
-                <a href="{{ route('admin.attendances.index') }}" class="btn btn-secondary">
+            <div class="d-flex justify-content-between">                <a href="{{ auth()->user()->role === 'teacher' ? route('teacher.attendances.index') : route('admin.attendances.index') }}" class="btn btn-secondary">
                     <i class="fas fa-times me-2"></i>
                     إلغاء
                 </a>
@@ -107,18 +105,36 @@ document.getElementById('lesson_id').addEventListener('change', function() {
     const studentSelect = document.getElementById('student_id');
     
     if (lessonId) {
-        fetch(`/admin/lessons/${lessonId}/students`)
-            .then(response => response.json())
+        // تحديد المسار بناءً على دور المستخدم
+        const basePath = '{{ auth()->user()->role === "teacher" ? "/teacher" : "/admin" }}';
+        const url = `${basePath}/lessons/${lessonId}/students`;
+        
+        studentSelect.innerHTML = '<option value="">جاري التحميل...</option>';
+        studentSelect.disabled = true;
+        
+        fetch(url)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
-                studentSelect.innerHTML = '<option value="">اختر الطالب</option>';
-                data.students.forEach(student => {
-                    studentSelect.innerHTML += `<option value="${student.id}">${student.name}</option>`;
-                });
-                studentSelect.disabled = false;
+                if (data.success && data.students) {
+                    studentSelect.innerHTML = '<option value="">اختر الطالب</option>';
+                    data.students.forEach(student => {
+                        studentSelect.innerHTML += `<option value="${student.id}">${student.name}</option>`;
+                    });
+                    studentSelect.disabled = false;
+                } else {
+                    throw new Error(data.error || 'خطأ في البيانات');
+                }
             })
             .catch(error => {
                 console.error('Error:', error);
                 studentSelect.innerHTML = '<option value="">خطأ في تحميل الطلاب</option>';
+                studentSelect.disabled = false;
+                alert('خطأ في تحميل قائمة الطلاب: ' + error.message);
             });
     } else {
         studentSelect.innerHTML = '<option value="">اختر الدرس أولاً</option>';

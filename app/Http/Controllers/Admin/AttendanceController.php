@@ -263,14 +263,20 @@ class AttendanceController extends Controller
         
         return redirect()->route('admin.attendances.index')
             ->with('success', 'تم حذف سجل الحضور بنجاح');
-    }
-
-    public function getStudents(Lesson $lesson)
+    }    public function getStudents(Lesson $lesson)
     {
-        $this->authorizeLesson($lesson->id);
+        $user = auth()->user();
+        
+        // التحقق من الصلاحيات
+        if ($user->role === 'teacher' && $lesson->teacher_id !== $user->id) {
+            return response()->json(['error' => 'غير مسموح لك بالوصول لهذا الدرس'], 403);
+        }
+        
+        $students = $lesson->students()->select('id', 'name')->get();
         
         return response()->json([
-            'students' => $lesson->students()->select('id', 'name')->get()
+            'success' => true,
+            'students' => $students
         ]);
     }
 

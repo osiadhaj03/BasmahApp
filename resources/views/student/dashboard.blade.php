@@ -142,28 +142,54 @@
                 
                 @if($todayLessons->count() > 0)
                 <div class="row mt-3">
-                    @foreach($todayLessons as $lesson)
-                    @php
+                    @foreach($todayLessons as $lesson)                    @php
                         $hasCheckedInToday = $lesson->attendances->where('date', \Carbon\Carbon::today())->count() > 0;
                         $currentTime = \Carbon\Carbon::now();
-                        $startTime = $lesson->start_time ? \Carbon\Carbon::createFromFormat('H:i:s', $lesson->start_time) : null;
-                        $endTime = $lesson->end_time ? \Carbon\Carbon::createFromFormat('H:i:s', $lesson->end_time) : null;
+                        
+                        // إصلاح تحويل الوقت
+                        $startTime = null;
+                        $endTime = null;
+                        
+                        if ($lesson->start_time) {
+                            try {
+                                // محاولة تحويل من datetime كامل أولاً
+                                $startTime = \Carbon\Carbon::parse($lesson->start_time);
+                            } catch (\Exception $e) {
+                                try {
+                                    // إذا فشل، محاولة تحويل من time فقط
+                                    $startTime = \Carbon\Carbon::createFromFormat('H:i:s', $lesson->start_time);
+                                } catch (\Exception $e2) {
+                                    $startTime = null;
+                                }
+                            }
+                        }
+                        
+                        if ($lesson->end_time) {
+                            try {
+                                $endTime = \Carbon\Carbon::parse($lesson->end_time);
+                            } catch (\Exception $e) {
+                                try {
+                                    $endTime = \Carbon\Carbon::createFromFormat('H:i:s', $lesson->end_time);
+                                } catch (\Exception $e2) {
+                                    $endTime = null;
+                                }
+                            }
+                        }
                     @endphp
                     <div class="col-md-6 mb-3">
                         <div class="card lesson-card h-100">
                             <div class="card-body">
                                 <div class="d-flex justify-content-between align-items-start mb-3">
                                     <div>
-                                        <h6 class="card-title mb-1">{{ $lesson->name ?? $lesson->subject }}</h6>
-                                        <small class="text-muted">
+                                        <h6 class="card-title mb-1">{{ $lesson->name ?? $lesson->subject }}</h6>                                        <small class="text-muted">
                                             <i class="fas fa-user me-1"></i>
                                             {{ $lesson->teacher->name }}
                                         </small>
                                     </div>
-                                    @if($lesson->schedule_time)
+                                    @if($startTime)
                                     <span class="badge bg-info">
                                         <i class="fas fa-clock me-1"></i>
-                                        {{ \Carbon\Carbon::createFromFormat('H:i:s', $lesson->schedule_time)->format('H:i') }}
+                                        {{ $startTime->format('H:i') }}
                                     </span>
                                     @endif
                                 </div>
@@ -240,12 +266,11 @@
                                 <div class="mb-3">
                                     <small class="text-muted d-block">
                                         <i class="fas fa-chalkboard-teacher me-1"></i>
-                                        {{ $lesson->teacher->name }}
-                                    </small>
-                                    @if($lesson->schedule_time)
+                                        {{ $lesson->teacher->name }}                                    </small>
+                                    @if($lesson->start_time)
                                     <small class="text-muted d-block">
                                         <i class="fas fa-clock me-1"></i>
-                                        {{ \Carbon\Carbon::createFromFormat('H:i:s', $lesson->schedule_time)->format('H:i') }}
+                                        {{ \Carbon\Carbon::parse($lesson->start_time)->format('H:i') }}
                                     </small>
                                     @endif
                                 </div>
