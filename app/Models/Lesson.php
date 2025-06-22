@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Crypt;
 
 class Lesson extends Model
 {
@@ -70,6 +71,14 @@ class Lesson extends Model
     }
 
     /**
+     * Get all QR tokens for this lesson
+     */
+    public function qrTokens(): HasMany
+    {
+        return $this->hasMany(QrToken::class);
+    }
+
+    /**
      * Get attendances for a specific date
      */
     public function attendancesForDate($date): HasMany
@@ -108,6 +117,48 @@ class Lesson extends Model
         $this->save();
         
         return $this->qr_code;
+    }
+
+    /**
+     * Generate new QR token for this lesson (15 minutes validity)
+     */
+    public function generateQRCodeToken()
+    {
+        // حذف جميع التوكن المنتهية الصلاحية أو المستخدمة لهذا الدرس
+        $this->qrTokens()->where(function($query) {
+            $query->where('expires_at', '<', now())
+                  ->orWhereNotNull('used_at');
+        })->delete();
+
+        // توليد token جديد
+        $tokenData = [
+            'lesson_id' => $this->id,
+            'timestamp' => now()->timestamp,
+            'random' => Str::random(16)
+        ];
+        
+        $encryptedToken = base64_encode(Crypt::encrypt(json_encode($tokenData)));
+        
+        // إنشاء QR token في قاعدة البيانات
+        $qrToken = $this->qrTokens()->create([
+            'token' => $encryptedToken,
+            'generated_at' => now(),
+            'expires_at' => now()->addMinutes(15),
+        ]);
+
+        return $qrToken;
+    }
+
+    /**
+     * Get valid QR token for this lesson
+     */
+    public function getValidQRToken()
+    {
+        return $this->qrTokens()
+                    ->where('expires_at', '>', now())
+                    ->whereNull('used_at')
+                    ->latest('generated_at')
+                    ->first();
     }
 
     /**
@@ -155,6 +206,83 @@ class Lesson extends Model
         $attendanceWindowEnd = $lessonStart->copy()->addMinutes(15);
         
         return $now->between($lessonStart, $attendanceWindowEnd);
+    }
+
+    /**
+     * Check if QR generation is allowed (only during lesson time or 15 minutes before)
+     */
+    public function canGenerateQR()
+    {
+        // التحقق من وجود معلومات الدرس المطلوبة
+        if (!$this->day_of_week || !$this->start_time || !$this->end_time) {
+            return false;
+        }
+
+        $now = now();
+        $currentDay = strtolower($now->format('l'));
+        
+        // التحقق من أن اليوم الحالي يطابق يوم الدرس
+        if ($this->day_of_week !== $currentDay) {
+            return false;
+        }
+
+        // الحصول على وقت بداية ونهاية الدرس اليوم
+        $lessonStart = Carbon::createFromFormat('H:i', $this->start_time->format('H:i'));
+        $lessonStart->setDate($now->year, $now->month, $now->day);
+        
+        $lessonEnd = Carbon::createFromFormat('H:i', $this->end_time->format('H:i'));
+        $lessonEnd->setDate($now->year, $now->month, $now->day);
+        
+        // السماح بتوليد QR قبل 15 دقيقة من بداية الدرس وحتى نهاية الدرس
+        $qrGenerationStart = $lessonStart->copy()->subMinutes(15);
+        
+        return $now->between($qrGenerationStart, $lessonEnd);
+    }
+
+    /**
+     * Get remaining time until QR generation is allowed
+     */
+    public function getTimeUntilQRGeneration()
+    {
+        if (!$this->day_of_week || !$this->start_time) {
+            return null;
+        }
+
+        $now = now();
+        $currentDay = strtolower($now->format('l'));
+        
+        // إذا لم يكن اليوم الصحيح، احسب الوقت للدرس القادم
+        if ($this->day_of_week !== $currentDay) {
+            // حساب عدد الأيام حتى الدرس القادم
+            $daysOfWeek = [
+                'sunday' => 0, 'monday' => 1, 'tuesday' => 2, 'wednesday' => 3,
+                'thursday' => 4, 'friday' => 5, 'saturday' => 6
+            ];
+            
+            $currentDayNumber = $daysOfWeek[$currentDay];
+            $lessonDayNumber = $daysOfWeek[$this->day_of_week];
+            
+            $daysUntilLesson = ($lessonDayNumber - $currentDayNumber + 7) % 7;
+            if ($daysUntilLesson === 0) {
+                $daysUntilLesson = 7; // الأسبوع القادم
+            }
+            
+            return $now->addDays($daysUntilLesson)->startOfDay()
+                      ->addHours($this->start_time->hour)
+                      ->addMinutes($this->start_time->minute)
+                      ->subMinutes(15);
+        }
+        
+        // نفس اليوم - احسب الوقت حتى 15 دقيقة قبل بداية الدرس
+        $lessonStart = Carbon::createFromFormat('H:i', $this->start_time->format('H:i'));
+        $lessonStart->setDate($now->year, $now->month, $now->day);
+        $qrGenerationStart = $lessonStart->copy()->subMinutes(15);
+        
+        if ($now->isAfter($qrGenerationStart)) {
+            return null; // الوقت مناسب الآن أو مضى
+        }
+        
+        return $qrGenerationStart;
     }
 
     /**
@@ -226,5 +354,28 @@ class Lesson extends Model
     public function isCancelled()
     {
         return $this->status === 'cancelled';
+    }
+
+    /**
+     * Get the QR token associated with the lesson
+     */
+    public function qrToken(): BelongsTo
+    {
+        return $this->belongsTo(QrToken::class, 'id', 'lesson_id');
+    }
+
+    /**
+     * Generate a dynamic token for the lesson
+     */
+    public function generateToken()
+    {
+        $token = Str::random(32);
+        
+        // تأكد من أن الرمز فريد وليس له علاقة قائمة بالفعل
+        while (QrToken::where('token', $token)->exists()) {
+            $token = Str::random(32);
+        }
+        
+        return $token;
     }
 }

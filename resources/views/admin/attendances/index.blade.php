@@ -4,8 +4,7 @@
 
 @section('content')
 <div class="container-fluid">
-    <!-- رسائل النجاح والخطأ -->
-    @if(session('success'))
+    <!-- رسائل النجاح والخطأ -->    @if(session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             <i class="fas fa-check-circle me-2"></i>
             {{ session('success') }}
@@ -39,20 +38,11 @@
                                     إدارة حضور دروسك
                                 @endif
                             </small>
-                        </div>
-                        <div class="col-auto">
-                            @if(auth()->user()->role === 'teacher')
-                            <div class="btn-group me-2" role="group">
-                                <a href="{{ route('admin.attendances.bulk') }}" class="btn btn-success">
-                                    <i class="fas fa-users-check me-2"></i>
-                                    تسجيل جماعي
-                                </a>
-                                <a href="{{ route('admin.attendances.create') }}" class="btn btn-primary">
-                                    <i class="fas fa-plus me-2"></i>
-                                    تسجيل فردي
-                                </a>
+                        </div>                        <div class="col-auto">
+                            <div class="alert alert-info mb-0 me-2" style="font-size: 0.85rem;">
+                                <i class="fas fa-info-circle me-1"></i>
+                                تسجيل الحضور يتم عبر الطلاب باستخدام QR Code فقط
                             </div>
-                            @endif
                             <a href="{{ route('admin.attendances.reports') }}" class="btn btn-info">
                                 <i class="fas fa-chart-line me-2"></i>
                                 التقارير المتقدمة
@@ -356,21 +346,12 @@
                                 <a href="{{ route('admin.attendances.index') }}" class="btn btn-outline-primary">
                                     <i class="fas fa-undo me-2"></i>
                                     إزالة الفلاتر
-                                </a>
-                            @else
-                                <p class="text-muted">ابدأ بتسجيل حضور الطلاب</p>
-                                @if(auth()->user()->role === 'teacher')
-                                <div class="btn-group" role="group">
-                                    <a href="{{ route('admin.attendances.bulk') }}" class="btn btn-success">
-                                        <i class="fas fa-users-check me-2"></i>
-                                        تسجيل جماعي
-                                    </a>
-                                    <a href="{{ route('admin.attendances.create') }}" class="btn btn-primary">
-                                        <i class="fas fa-plus me-2"></i>
-                                        تسجيل فردي
-                                    </a>
+                                </a>                            @else
+                                <p class="text-muted">تسجيل الحضور متاح للطلاب فقط عبر QR Code</p>
+                                <div class="alert alert-info">
+                                    <i class="fas fa-qrcode me-2"></i>
+                                    يمكن للطلاب تسجيل الحضور باستخدام رمز QR الخاص بكل درس
                                 </div>
-                                @endif
                             @endif
                         </div>
                     @endif

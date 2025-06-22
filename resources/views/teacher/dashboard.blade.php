@@ -11,8 +11,8 @@
         <a href="{{ route('teacher.lessons.create') }}" class="btn btn-success">
             <i class="fas fa-plus"></i> إضافة درس جديد
         </a>
-        <a href="{{ route('teacher.attendances.create') }}" class="btn btn-primary">
-            <i class="fas fa-user-check"></i> تسجيل حضور فردي
+        <a href="{{ route('teacher.attendances.index') }}" class="btn btn-primary">
+            <i class="fas fa-eye"></i> مراجعة الحضور
         </a>
     </div>
 </div>
@@ -194,11 +194,11 @@
                                 <i class="fas fa-users"></i>
                                 {{ $lesson->students_count }} طالب
                             </small>
-                        </div>
-                        <div>
-                            <a href="{{ route('teacher.attendances.create', ['lesson_id' => $lesson->id]) }}" 
-                               class="btn btn-sm btn-outline-primary">
-                                <i class="fas fa-check"></i>
+                        </div>                        <div>
+                            <a href="{{ route('teacher.attendances.lesson', $lesson) }}" 
+                               class="btn btn-sm btn-outline-primary" 
+                               title="مراجعة الحضور">
+                                <i class="fas fa-eye"></i>
                             </a>
                         </div>
                     </div>
@@ -411,13 +411,13 @@
                         </tbody>
                     </table>
                 </div>
-                @else
-                    <div class="text-center text-muted py-4">
+                @else                    <div class="text-center text-muted py-4">
                         <i class="fas fa-clipboard-list fa-3x mb-3"></i>
                         <p>لا توجد سجلات حضور حديثة</p>
-                        <a href="{{ route('teacher.attendances.create') }}" class="btn btn-primary">
-                            <i class="fas fa-plus"></i> ابدأ بتسجيل الحضور الأول
-                        </a>
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-info-circle"></i>
+                            تسجيل الحضور يتم عبر الطلاب باستخدام QR Code
+                        </div>
                     </div>
                 @endif
             </div>

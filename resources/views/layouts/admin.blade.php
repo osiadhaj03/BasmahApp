@@ -69,7 +69,9 @@
                     <small class="badge bg-light text-dark mt-2">
                         {{ auth()->user()->role === 'admin' ? 'مدير' : 'معلم' }}
                     </small>
-                </div>                <nav class="nav flex-column">
+                </div>
+
+                <nav class="nav flex-column">
                     @if(auth()->user()->role === 'admin')
                         <a class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}" 
                            href="{{ route('admin.dashboard') }}">
@@ -89,8 +91,9 @@
                         <a class="nav-link {{ request()->routeIs('admin.attendances.*') ? 'active' : '' }}" 
                            href="{{ route('admin.attendances.index') }}">
                             <i class="fas fa-clipboard-check me-2"></i>
-                            الحضور
-                        </a>                    @elseif(auth()->user()->role === 'teacher')
+                            مراجعة الحضور
+                        </a>
+                    @elseif(auth()->user()->role === 'teacher')
                         <a class="nav-link {{ request()->routeIs('teacher.dashboard') ? 'active' : '' }}" 
                            href="{{ route('teacher.dashboard') }}">
                             <i class="fas fa-tachometer-alt me-2"></i>
@@ -104,12 +107,7 @@
                         <a class="nav-link {{ request()->routeIs('teacher.attendances.*') ? 'active' : '' }}" 
                            href="{{ route('teacher.attendances.index') }}">
                             <i class="fas fa-clipboard-check me-2"></i>
-                            الحضور والغياب
-                        </a>
-                        <a class="nav-link {{ request()->routeIs('teacher.attendances.create') ? 'active' : '' }}" 
-                           href="{{ route('teacher.attendances.create') }}">
-                            <i class="fas fa-plus me-2"></i>
-                            تسجيل حضور فردي
+                            مراجعة الحضور والغياب
                         </a>
                     @endif
                 </nav>

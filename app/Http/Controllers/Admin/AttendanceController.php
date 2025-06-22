@@ -80,57 +80,14 @@ class AttendanceController extends Controller
         return view('admin.attendances.index', compact('attendances', 'lessons', 'stats'));
     }    public function create()
     {
-        $user = auth()->user();
-        
-        // المدير لا يمكنه تسجيل الحضور
-        if ($user->role === 'admin') {
-            return redirect()->route('admin.attendances.index')
-                ->with('error', 'المدير يمكنه عرض الحضور فقط، لا يمكن التسجيل');
-        }
-        
-        $lessons = Lesson::where('teacher_id', $user->id)->get();
-        
-        return view('admin.attendances.create', compact('lessons'));
-    }
-
-    public function store(Request $request)
+        // تم إلغاء تسجيل الحضور للمعلمين والإدارة - فقط الطلاب يسجلون الحضور عبر QR Code
+        return redirect()->route(auth()->user()->role . '.attendances.index')
+            ->with('error', 'تسجيل الحضور متاح للطلاب فقط عبر QR Code');
+    }    public function store(Request $request)
     {
-        // المدير لا يمكنه تسجيل الحضور
-        if (auth()->user()->role === 'admin') {
-            return redirect()->route('admin.attendances.index')
-                ->with('error', 'المدير يمكنه عرض الحضور فقط، لا يمكن التسجيل');
-        }
-
-        $request->validate([
-            'lesson_id' => 'required|exists:lessons,id',
-            'student_id' => 'required|exists:users,id',
-            'date' => 'required|date',
-            'status' => 'required|in:present,absent,late,excused',
-        ]);
-
-        $this->authorizeLesson($request->lesson_id);
-
-        // التحقق من أن الطالب مسجل في هذا الدرس
-        $lesson = Lesson::findOrFail($request->lesson_id);
-        if (!$lesson->students()->where('student_id', $request->student_id)->exists()) {
-            return back()->withErrors(['student_id' => 'الطالب غير مسجل في هذا الدرس']);
-        }
-
-        // التحقق من عدم وجود سجل حضور مسبق لنفس الطالب والدرس والتاريخ
-        $existingAttendance = Attendance::where([
-            'lesson_id' => $request->lesson_id,
-            'student_id' => $request->student_id,
-            'date' => $request->date,
-        ])->first();
-
-        if ($existingAttendance) {
-            return back()->withErrors(['date' => 'سجل الحضور موجود مسبقاً لهذا التاريخ']);
-        }
-
-        Attendance::create($request->all());
-
-        return redirect()->route('admin.attendances.index')
-            ->with('success', 'تم تسجيل الحضور بنجاح');
+        // تم إلغاء تسجيل الحضور للمعلمين والإدارة - فقط الطلاب يسجلون الحضور عبر QR Code
+        return redirect()->route(auth()->user()->role . '.attendances.index')
+            ->with('error', 'تسجيل الحضور متاح للطلاب فقط عبر QR Code');
     }
 
     /**
@@ -205,48 +162,53 @@ class AttendanceController extends Controller
         $attendance->load(['student', 'lesson.teacher']);
         
         return view('admin.attendances.show', compact('attendance'));
-    }
-
-    public function edit(Attendance $attendance)
+    }    public function edit(Attendance $attendance)
     {
         $this->authorizeAttendance($attendance);
         
-        // المدير لا يمكنه تعديل الحضور
-        if (auth()->user()->role === 'admin') {
-            return redirect()->route('admin.attendances.index')
-                ->with('error', 'المدير يمكنه عرض الحضور فقط، لا يمكن التعديل');
-        }
-        
         $user = auth()->user();
-        $lessons = Lesson::where('teacher_id', $user->id)->get();
-        $students = User::where('role', 'student')->get();
+        
+        // جلب البيانات المطلوبة للتعديل
+        if ($user->role === 'admin') {
+            $lessons = Lesson::with('teacher')->get();
+            $students = User::where('role', 'student')->get();
+        } else {
+            $lessons = Lesson::where('teacher_id', $user->id)->get();
+            $students = User::where('role', 'student')->get();
+        }
         
         return view('admin.attendances.edit', compact('attendance', 'lessons', 'students'));
     }
 
     public function update(Request $request, Attendance $attendance)
     {
-        $this->authorizeAttendance($attendance);
+        $user = auth()->user();
         
-        // المدير لا يمكنه تعديل الحضور
-        if (auth()->user()->role === 'admin') {
-            return redirect()->route('admin.attendances.index')
-                ->with('error', 'المدير يمكنه عرض الحضور فقط، لا يمكن التعديل');
+        // التحقق من الصلاحيات
+        if ($user->role === 'teacher') {
+            // التأكد من أن الحضور يخص درس هذا المعلم
+            if ($attendance->lesson->teacher_id !== $user->id) {
+                abort(403, 'ليس لديك صلاحية لتعديل هذا السجل');
+            }
+        } elseif ($user->role !== 'admin') {
+            abort(403, 'ليس لديك صلاحية لتعديل سجلات الحضور');
         }
-        
-        $request->validate([
-            'lesson_id' => 'required|exists:lessons,id',
-            'student_id' => 'required|exists:users,id',
-            'date' => 'required|date',
+
+        $validated = $request->validate([
             'status' => 'required|in:present,absent,late,excused',
+            'notes' => 'nullable|string|max:255',
+        ], [
+            'status.required' => 'حالة الحضور مطلوبة',
+            'status.in' => 'حالة الحضور غير صحيحة',
+            'notes.max' => 'الملاحظات طويلة جداً (الحد الأقصى 255 حرف)',
         ]);
 
-        $this->authorizeLesson($request->lesson_id);
+        $attendance->update($validated);
 
-        $attendance->update($request->all());
-
-        return redirect()->route('admin.attendances.index')
-            ->with('success', 'تم تحديث الحضور بنجاح');
+        $redirectRoute = $user->role === 'admin' ? 'admin.attendances.index' : 'teacher.attendances.index';
+        
+        return redirect()->route($redirectRoute)
+            ->with('success', 'تم تحديث حالة الحضور بنجاح');
     }
 
     public function destroy(Attendance $attendance)
@@ -290,14 +252,114 @@ class AttendanceController extends Controller
                 abort(403, 'غير مسموح لك بالوصول لهذا الدرس');
             }
         }
-    }
-
-    private function authorizeAttendance(Attendance $attendance)
+    }    private function authorizeAttendance(Attendance $attendance)
     {
         $user = auth()->user();
         
         if ($user->role === 'teacher' && $attendance->lesson->teacher_id !== $user->id) {
             abort(403, 'غير مسموح لك بالوصول لهذا السجل');
         }
+    }
+
+    /**
+     * عرض سجلات الحضور لدرس محدد
+     */
+    public function lessonAttendance(Lesson $lesson)
+    {
+        $user = auth()->user();
+        
+        // التحقق من الصلاحيات - المعلم يستطيع فقط عرض دروسه
+        if ($user->role === 'teacher' && $lesson->teacher_id !== $user->id) {
+            abort(403, 'غير مسموح لك بالوصول لهذا الدرس');
+        }
+        
+        // جلب سجلات الحضور للدرس
+        $attendances = Attendance::with(['student'])
+            ->where('lesson_id', $lesson->id)
+            ->orderBy('date', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
+        
+        // إحصائيات الحضور
+        $stats = [
+            'total' => $attendances->total(),
+            'present' => Attendance::where('lesson_id', $lesson->id)->where('status', 'present')->count(),
+            'late' => Attendance::where('lesson_id', $lesson->id)->where('status', 'late')->count(),
+            'absent' => Attendance::where('lesson_id', $lesson->id)->where('status', 'absent')->count(),
+        ];
+        
+        $stats['present_rate'] = $stats['total'] > 0 ? round(($stats['present'] / $stats['total']) * 100, 1) : 0;
+        
+        return view('teacher.attendances.lesson', compact('lesson', 'attendances', 'stats'));
+    }
+    
+    public function getStudentLessons(User $student)
+    {
+        $user = auth()->user();
+        
+        // التحقق من أن المستخدم المحدد هو طالب
+        if ($student->role !== 'student') {
+            return response()->json(['error' => 'المستخدم المحدد ليس طالباً'], 400);
+        }
+        
+        try {
+            // جلب دروس الطالب
+            $lessonsQuery = $student->lessons();
+            
+            // إذا كان المستخدم معلم، نعرض دروسه فقط
+            if ($user->role === 'teacher') {
+                $lessonsQuery->where('teacher_id', $user->id);
+            }
+            
+            $lessons = $lessonsQuery->select('id', 'subject', 'name')->get();
+            
+            return response()->json([
+                'success' => true,
+                'lessons' => $lessons
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => 'خطأ في تحميل بيانات الدروس: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * عرض سجل حضور طالب معين في درس معين
+     */
+    public function studentAttendance(Lesson $lesson, User $student)
+    {
+        $user = auth()->user();
+        
+        // التحقق من الصلاحيات - المعلم يستطيع فقط عرض طلاب دروسه
+        if ($user->role === 'teacher' && $lesson->teacher_id !== $user->id) {
+            abort(403, 'غير مسموح لك بالوصول لهذا الدرس');
+        }
+        
+        // التحقق من أن الطالب مسجل في هذا الدرس
+        if (!$lesson->students()->where('student_id', $student->id)->exists()) {
+            abort(404, 'الطالب غير مسجل في هذا الدرس');
+        }
+        
+        // جلب سجلات حضور الطالب في هذا الدرس
+        $attendances = Attendance::where('lesson_id', $lesson->id)
+            ->where('student_id', $student->id)
+            ->orderBy('date', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
+        
+        // إحصائيات حضور الطالب
+        $stats = [
+            'total' => $attendances->total(),
+            'present' => Attendance::where('lesson_id', $lesson->id)->where('student_id', $student->id)->where('status', 'present')->count(),
+            'late' => Attendance::where('lesson_id', $lesson->id)->where('student_id', $student->id)->where('status', 'late')->count(),
+            'absent' => Attendance::where('lesson_id', $lesson->id)->where('student_id', $student->id)->where('status', 'absent')->count(),
+            'excused' => Attendance::where('lesson_id', $lesson->id)->where('student_id', $student->id)->where('status', 'excused')->count(),
+        ];
+        
+        $stats['attendance_rate'] = $stats['total'] > 0 ? round((($stats['present'] + $stats['late']) / $stats['total']) * 100, 1) : 0;
+        
+        return view('teacher.attendances.student', compact('lesson', 'student', 'attendances', 'stats'));
     }
 }

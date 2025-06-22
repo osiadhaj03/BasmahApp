@@ -96,13 +96,10 @@
     <div class="card-body">
         @if($lessons->count() > 0)
         <div class="table-responsive">
-            <table class="table table-hover">
-                <thead>
+            <table class="table table-hover">                <thead>
                     <tr>
-                        <th>اسم الدرس</th>
                         <th>المادة</th>
                         <th>اليوم والوقت</th>
-                        <th>القاعة</th>
                         <th class="text-center">الطلاب</th>
                         <th class="text-center">الحضور</th>
                         <th class="text-center">الحالة</th>
@@ -116,21 +113,28 @@
                         $presentCount = $lesson->attendances->where('status', 'present')->count();
                         $attendanceRate = $attendanceCount > 0 ? round(($presentCount / $attendanceCount) * 100, 1) : 0;
                     @endphp
-                    <tr>
-                        <td>
+                    <tr>                        <td>
                             <div>
-                                <strong>{{ $lesson->name }}</strong>
+                                <strong>{{ $lesson->subject }}</strong>
                                 @if($lesson->description)
-                                <br><small class="text-muted">{{ Str::limit($lesson->description, 50) }}</small>
+                                    <br><small class="text-muted">{{ Str::limit($lesson->description, 50) }}</small>
                                 @endif
                             </div>
-                        </td>
-                        <td>
-                            <span class="badge bg-primary">{{ $lesson->subject }}</span>
-                        </td>
-                        <td>
+                        </td>                        <td>
+                            @if($lesson->day_of_week && $lesson->start_time)
                             <div>
-                                <strong>{{ ucfirst($lesson->day_of_week) }}</strong>
+                                @php
+                                    $daysOfWeek = [
+                                        'sunday' => 'الأحد',
+                                        'monday' => 'الاثنين',
+                                        'tuesday' => 'الثلاثاء',
+                                        'wednesday' => 'الأربعاء',
+                                        'thursday' => 'الخميس',
+                                        'friday' => 'الجمعة',
+                                        'saturday' => 'السبت',
+                                    ];
+                                @endphp
+                                <strong>{{ $daysOfWeek[$lesson->day_of_week] ?? $lesson->day_of_week }}</strong>
                                 <br>
                                 <small class="text-muted">
                                     <i class="fas fa-clock"></i>
@@ -138,16 +142,15 @@
                                     {{ \Carbon\Carbon::parse($lesson->end_time)->format('H:i') }}
                                 </small>
                             </div>
-                        </td>
-                        <td>
-                            @if($lesson->classroom)
-                                <i class="fas fa-door-open"></i> {{ $lesson->classroom }}
                             @else
-                                <span class="text-muted">غير محدد</span>
+                            <span class="text-warning">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                يحتاج إكمال الإعداد
+                            </span>
                             @endif
                         </td>
                         <td class="text-center">
-                            <span class="badge bg-info">{{ $lesson->students_count }}/{{ $lesson->max_students ?? 30 }}</span>
+                            <span class="badge bg-info">{{ $lesson->students_count }}</span>
                         </td>
                         <td class="text-center">
                             @if($attendanceCount > 0)
@@ -199,18 +202,11 @@
                                     <button type="button" class="btn btn-outline-secondary dropdown-toggle" 
                                             data-bs-toggle="dropdown">
                                         <i class="fas fa-ellipsis-v"></i>
-                                    </button>
-                                    <ul class="dropdown-menu">
+                                    </button>                                    <ul class="dropdown-menu">
                                         <li>
                                             <a class="dropdown-item" 
-                                               href="{{ route('teacher.attendances.create', ['lesson_id' => $lesson->id]) }}">
-                                                <i class="fas fa-user-check me-2"></i>تسجيل حضور
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a class="dropdown-item" 
-                                               href="{{ route('teacher.attendances.bulk', ['lesson_id' => $lesson->id]) }}">
-                                                <i class="fas fa-list-check me-2"></i>حضور جماعي
+                                               href="{{ route('teacher.attendances.lesson', $lesson) }}">
+                                                <i class="fas fa-eye me-2"></i>مراجعة الحضور
                                             </a>
                                         </li>
                                         <li><hr class="dropdown-divider"></li>

@@ -12,8 +12,13 @@ class AdminController extends Controller
 {    public function dashboard()
     {
         $user = auth()->user();
-        $data = [];
         
+        // إذا كان المستخدم معلم، وجهه لصفحة المعلم
+        if ($user->role === 'teacher') {
+            return redirect()->route('teacher.dashboard');
+        }
+        
+        // باقي الكود للمدير فقط
         if ($user->role === 'admin') {
             $data = [
                 'totalUsers' => User::count(),
@@ -23,21 +28,11 @@ class AdminController extends Controller
                 'totalAttendances' => Attendance::count(),
                 'todayAttendances' => Attendance::whereDate('date', today())->count(),
             ];
-        } elseif ($user->role === 'teacher') {
-            $teacherLessons = Lesson::where('teacher_id', $user->id)->pluck('id');
-            $data = [
-                'myLessons' => $teacherLessons->count(),
-                'myStudents' => Lesson::where('teacher_id', $user->id)
-                    ->withCount('students')
-                    ->get()
-                    ->sum('students_count'),
-                'todayAttendances' => Attendance::whereIn('lesson_id', $teacherLessons)
-                    ->whereDate('date', today())
-                    ->count(),
-                'totalAttendances' => Attendance::whereIn('lesson_id', $teacherLessons)->count(),
-            ];
+            
+            return view('admin.dashboard', compact('data', 'user'));
         }
         
-        return view('admin.dashboard', compact('data', 'user'));
+        // إذا لم يكن المستخدم مدير أو معلم
+        abort(403, 'غير مسموح لك بالوصول لهذه الصفحة');
     }
 }

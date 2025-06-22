@@ -25,12 +25,12 @@ class AdminLoginController extends Controller
         if (Auth::attempt($credentials)) {
             $user = Auth::user();
             $request->session()->regenerate();
-            
-            // توجيه المستخدم حسب دوره
+              // توجيه المستخدم حسب دوره
             switch ($user->role) {
                 case 'admin':
-                case 'teacher':
                     return redirect()->intended('/admin/dashboard');
+                case 'teacher':
+                    return redirect()->intended('/teacher/dashboard');
                 case 'student':
                     return redirect()->intended('/student/dashboard');
                 default:

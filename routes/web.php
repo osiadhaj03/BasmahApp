@@ -32,22 +32,26 @@ Route::prefix('admin')->group(function () {
         
         // Lesson Management Routes
         Route::resource('lessons', LessonController::class)->names('admin.lessons');
-        Route::resource('attendances', AttendanceController::class)->names('admin.attendances');
         
-        // Attendance Routes
-        Route::get('attendances-bulk', [AttendanceController::class, 'bulk'])->name('admin.attendances.bulk');
-        Route::post('attendances-bulk', [AttendanceController::class, 'bulkStore'])->name('admin.attendances.bulk-store');
+        // Attendance Routes (view and edit only - no creation)
+        Route::get('attendances', [AttendanceController::class, 'index'])->name('admin.attendances.index');
+        Route::get('attendances/{attendance}', [AttendanceController::class, 'show'])->name('admin.attendances.show');
+        Route::get('attendances/{attendance}/edit', [AttendanceController::class, 'edit'])->name('admin.attendances.edit');
+        Route::put('attendances/{attendance}', [AttendanceController::class, 'update'])->name('admin.attendances.update');
+        Route::delete('attendances/{attendance}', [AttendanceController::class, 'destroy'])->name('admin.attendances.destroy');
         Route::get('attendances-reports', [AttendanceController::class, 'reports'])->name('admin.attendances.reports');
         Route::get('lessons/{lesson}/students', [AttendanceController::class, 'getStudents'])
             ->name('admin.lessons.students');
+        Route::get('students/{student}/lessons', [AttendanceController::class, 'getStudentLessons'])
+            ->name('admin.students.lessons');
         
         // QR Code Routes for Teachers/Admins
-        Route::get('lessons/{lesson}/qr-generate', [QRCodeController::class, 'generateLessonQR'])
-            ->name('admin.lessons.qr.generate');
         Route::get('lessons/{lesson}/qr-display', [QRCodeController::class, 'displayQR'])
             ->name('admin.lessons.qr.display');
-        Route::get('lessons/{lesson}/qr-info', [QRCodeController::class, 'getLessonQRInfo'])
+        Route::get('lessons/{lesson}/qr-info', [QRCodeController::class, 'getTokenInfo'])
             ->name('admin.lessons.qr.info');
+        Route::post('lessons/{lesson}/qr-refresh', [QRCodeController::class, 'refreshToken'])
+            ->name('admin.lessons.qr.refresh');
     });
 });
 
@@ -70,14 +74,25 @@ Route::middleware('teacher')->group(function () {
     Route::delete('/teacher/lessons/{lesson}/remove-all-students', [TeacherLessonController::class, 'removeAllStudents'])
         ->name('teacher.lessons.remove-all-students');
     
-    // Teacher Attendance Management (view only for lessons they teach)
+    // Teacher Attendance Management (view and edit only)
     Route::get('/teacher/attendances', [AttendanceController::class, 'index'])->name('teacher.attendances.index');
-    Route::get('/teacher/attendances/create', [AttendanceController::class, 'create'])->name('teacher.attendances.create');
-    Route::post('/teacher/attendances', [AttendanceController::class, 'store'])->name('teacher.attendances.store');
-    Route::get('/teacher/attendances/bulk', [AttendanceController::class, 'bulk'])->name('teacher.attendances.bulk');
-    Route::post('/teacher/attendances/bulk', [AttendanceController::class, 'bulkStore'])->name('teacher.attendances.bulk-store');
-    Route::get('/teacher/lessons/{lesson}/students', [AttendanceController::class, 'getStudents'])
+    Route::get('/teacher/attendances/lesson/{lesson}', [AttendanceController::class, 'lessonAttendance'])
+        ->name('teacher.attendances.lesson');
+    Route::get('/teacher/attendances/lesson/{lesson}/student/{student}', [AttendanceController::class, 'studentAttendance'])
+        ->name('teacher.attendances.student');
+    Route::put('/teacher/attendances/{attendance}', [AttendanceController::class, 'update'])->name('teacher.attendances.update');
+    Route::get('/teacher/lessons/{lesson}/students', [TeacherLessonController::class, 'getStudents'])
         ->name('teacher.lessons.students');
+    Route::get('/teacher/students/{student}/lessons', [TeacherLessonController::class, 'getStudentLessons'])
+        ->name('teacher.students.lessons');
+        
+    // Teacher QR Code Routes (using admin routes)
+    Route::get('/teacher/lessons/{lesson}/qr-display', [QRCodeController::class, 'displayQR'])
+        ->name('teacher.lessons.qr.display');
+    Route::get('/teacher/lessons/{lesson}/qr-info', [QRCodeController::class, 'getTokenInfo'])
+        ->name('teacher.lessons.qr.info');
+    Route::post('/teacher/lessons/{lesson}/qr-refresh', [QRCodeController::class, 'refreshToken'])
+        ->name('teacher.lessons.qr.refresh');
 });
 
 // Student Routes
@@ -87,5 +102,8 @@ Route::middleware('student')->group(function () {
     
     // QR Code Scanner for Students
     Route::get('/qr-scanner', [QRCodeController::class, 'scanner'])->name('student.qr.scanner');
-    Route::post('/qr-scan', [QRCodeController::class, 'scanQR'])->name('student.qr.scan');
 });
+
+// Public QR Code Routes (accessible by both students and teachers)
+Route::get('/qr-generate/{lesson}', [QRCodeController::class, 'generateQR'])->name('qr.generate');
+Route::get('/attendance/scan', [QRCodeController::class, 'scanAttendance'])->name('attendance.scan');

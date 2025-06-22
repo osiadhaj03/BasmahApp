@@ -4,37 +4,50 @@ namespace App\Http\Controllers;
 
 use App\Models\Lesson;
 use App\Models\Attendance;
+use App\Models\QrToken;
 use Illuminate\Http\Request;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
+use Illuminate\Support\Facades\Crypt;
 use Carbon\Carbon;
 
-class QRCodeController extends Controller
+class QrCodeController extends Controller
 {
     /**
-     * Generate QR code for a lesson (Teacher view)
+     * Generate QR code image for a lesson token
      */
-    public function generateLessonQR(Request $request, Lesson $lesson)
+    public function generateQR(Request $request, $lessonId)
     {
+        $lesson = Lesson::findOrFail($lessonId);
+        
         // التأكد من أن المستخدم معلم أو مدير ولديه صلاحية
         $user = auth()->user();
         if (!$user || (!$user->isAdmin() && $lesson->teacher_id !== $user->id)) {
             abort(403, 'غير مسموح لك بالوصول لهذا الدرس');
         }
 
-        // توليد QR Code جديد
-        $qrData = $lesson->generateQRCode();
+        // الحصول على token صالح أو إنشاء جديد
+        $qrToken = $lesson->getValidQRToken();
+        if (!$qrToken) {
+            $qrToken = $lesson->generateQRCodeToken();
+        }
+
+        // إنشاء QR Code يحتوي على رابط لمسح Token
+        $scanUrl = url("/attendance/scan?token=" . urlencode($qrToken->token));
         
-        // إنشاء QR Code كصورة
         $qrCode = QrCode::format('png')
             ->size(300)
             ->errorCorrection('H')
-            ->generate($qrData);
+            ->generate($scanUrl);
 
-        return view('admin.lessons.qr-display', compact('lesson', 'qrCode'));
+        return response($qrCode)
+            ->header('Content-Type', 'image/png')
+            ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
+            ->header('Pragma', 'no-cache')
+            ->header('Expires', '0');
     }
 
     /**
-     * Display QR code for classroom projection
+     * Display QR code page for classroom projection
      */
     public function displayQR(Lesson $lesson)
     {
@@ -43,26 +56,16 @@ class QRCodeController extends Controller
             abort(403, 'غير مسموح لك بالوصول لهذا الدرس');
         }
 
-        // التأكد من وجود QR Code صالح
-        if (!$lesson->isQRCodeValid()) {
-            $lesson->generateQRCode();
-        }
-
-        $qrCode = QrCode::format('svg')
-            ->size(400)
-            ->errorCorrection('H')
-            ->generate($lesson->qr_code);
-
-        return view('admin.lessons.qr-fullscreen', compact('lesson', 'qrCode'));
+        return view('admin.lessons.qr-display', compact('lesson'));
     }
 
     /**
-     * Process QR code scan for attendance (Student)
+     * Process attendance scan using token
      */
-    public function scanQR(Request $request)
+    public function scanAttendance(Request $request)
     {
         $request->validate([
-            'qr_data' => 'required|string'
+            'token' => 'required|string'
         ]);
 
         $user = auth()->user();
@@ -73,14 +76,25 @@ class QRCodeController extends Controller
             ], 403);
         }
 
-        // التحقق من صحة QR Code
-        $lesson = Lesson::verifyQRCode($request->qr_data);
-        if (!$lesson) {
+        // البحث عن Token في قاعدة البيانات
+        $qrToken = QrToken::where('token', $request->token)->first();
+        
+        if (!$qrToken) {
             return response()->json([
                 'success' => false,
-                'message' => 'QR Code غير صالح أو منتهي الصلاحية'
+                'message' => 'رمز QR غير صحيح'
             ], 400);
         }
+
+        // التحقق من صلاحية Token
+        if (!$qrToken->isValid()) {
+            return response()->json([
+                'success' => false,
+                'message' => $qrToken->isExpired() ? 'انتهت صلاحية رمز QR (15 دقيقة)' : 'تم استخدام رمز QR مسبقاً'
+            ], 400);
+        }
+
+        $lesson = $qrToken->lesson;
 
         // التحقق من أن الطالب مسجل في هذا الدرس
         if (!$lesson->students()->where('student_id', $user->id)->exists()) {
@@ -88,14 +102,6 @@ class QRCodeController extends Controller
                 'success' => false,
                 'message' => 'أنت غير مسجل في هذا الدرس'
             ], 403);
-        }
-
-        // التحقق من نافذة الحضور (أول 15 دقيقة)
-        if (!$lesson->isWithinAttendanceWindow()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'انتهت فترة تسجيل الحضور (أول 15 دقيقة من بداية الدرس)'
-            ], 400);
         }
 
         // التحقق من عدم وجود حضور مسبق لنفس اليوم
@@ -121,11 +127,15 @@ class QRCodeController extends Controller
             'notes' => 'تم التسجيل عبر QR Code في ' . now()->format('H:i:s')
         ]);
 
+        // تحديد Token كمستخدم
+        $qrToken->markAsUsed();
+
         return response()->json([
             'success' => true,
             'message' => 'تم تسجيل حضورك بنجاح في درس ' . $lesson->name,
             'attendance_id' => $attendance->id,
             'lesson_name' => $lesson->name,
+            'subject' => $lesson->subject,
             'time' => now()->format('H:i')
         ]);
     }
@@ -144,25 +154,46 @@ class QRCodeController extends Controller
     }
 
     /**
-     * Get lesson QR info for API
+     * Get QR token info for API (for real-time updates)
      */
-    public function getLessonQRInfo(Lesson $lesson)
+    public function getTokenInfo(Lesson $lesson)
     {
         $user = auth()->user();
         if (!$user || (!$user->isAdmin() && $lesson->teacher_id !== $user->id)) {
             abort(403);
         }
 
+        $validToken = $lesson->getValidQRToken();
+        
         return response()->json([
             'lesson_id' => $lesson->id,
             'lesson_name' => $lesson->name,
             'subject' => $lesson->subject,
-            'day' => $lesson->day_of_week,
-            'start_time' => $lesson->start_time->format('H:i'),
-            'end_time' => $lesson->end_time->format('H:i'),
-            'qr_valid' => $lesson->isQRCodeValid(),
-            'within_window' => $lesson->isWithinAttendanceWindow(),
-            'students_count' => $lesson->students()->count()
+            'has_valid_token' => !is_null($validToken),
+            'token_expires_at' => $validToken ? $validToken->expires_at->format('Y-m-d H:i:s') : null,
+            'token_remaining_minutes' => $validToken ? $validToken->expires_at->diffInMinutes(now()) : 0,
+            'students_count' => $lesson->students()->count(),
+            'qr_url' => $validToken ? route('qr.generate', $lesson->id) : null
+        ]);
+    }
+
+    /**
+     * Refresh QR token (generate new one)
+     */
+    public function refreshToken(Lesson $lesson)
+    {
+        $user = auth()->user();
+        if (!$user || (!$user->isAdmin() && $lesson->teacher_id !== $user->id)) {
+            abort(403);
+        }
+
+        $newToken = $lesson->generateQRCodeToken();
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'تم توليد رمز QR جديد',
+            'token_expires_at' => $newToken->expires_at->format('Y-m-d H:i:s'),
+            'token_remaining_minutes' => 15
         ]);
     }
 }

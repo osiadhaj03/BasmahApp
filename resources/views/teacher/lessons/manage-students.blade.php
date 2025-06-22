@@ -3,10 +3,9 @@
 @section('title', 'إدارة طلاب الدرس')
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
+<div class="d-flex justify-content-between align-items-center mb-4">    <div>
         <h1 class="h3 mb-0">إدارة طلاب الدرس</h1>
-        <p class="text-muted mb-0">{{ $lesson->subject }} - {{ $lesson->grade }} - {{ $lesson->day_of_week }}</p>
+        <p class="text-muted mb-0">{{ $lesson->subject }} - {{ $lesson->day_of_week }}</p>
     </div>
     <div>
         <a href="{{ route('teacher.lessons.show', $lesson) }}" class="btn btn-secondary">
@@ -349,7 +348,7 @@ function updateBulkActions() {
 function removeStudent(studentId, studentName) {
     document.getElementById('studentNameToRemove').textContent = studentName;
     document.getElementById('removeStudentForm').action = 
-        `{{ route('teacher.lessons.remove-student', $lesson) }}/${studentId}`;
+        `{{ route('teacher.lessons.remove-student', [$lesson, '__STUDENT_ID__']) }}`.replace('__STUDENT_ID__', studentId);
     
     new bootstrap.Modal(document.getElementById('removeStudentModal')).show();
 }

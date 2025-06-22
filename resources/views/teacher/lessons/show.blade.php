@@ -1,25 +1,62 @@
 @extends('layouts.admin')
 
-@section('title', 'تفاصيل الدرس - ' . $lesson->name)
+@section('title', 'تفاصيل الدرس - ' . $lesson->subject)
 
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h1 class="h3 mb-0">{{ $lesson->name }}</h1>
-        <p class="text-muted mb-0">{{ $lesson->subject }} - {{ ucfirst($lesson->day_of_week) }}</p>
-    </div>
-    <div class="btn-group">
+        <h1 class="h3 mb-0">{{ $lesson->subject }}</h1>        <p class="text-muted mb-0">
+            @if($lesson->day_of_week && $lesson->start_time)
+                @php
+                    $daysOfWeek = [
+                        'sunday' => 'الأحد',
+                        'monday' => 'الاثنين',
+                        'tuesday' => 'الثلاثاء',
+                        'wednesday' => 'الأربعاء',
+                        'thursday' => 'الخميس',
+                        'friday' => 'الجمعة',
+                        'saturday' => 'السبت',
+                    ];
+                @endphp
+                {{ $daysOfWeek[$lesson->day_of_week] ?? $lesson->day_of_week }} - 
+                {{ \Carbon\Carbon::parse($lesson->start_time)->format('H:i') }}
+            @else
+                <span class="text-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    يحتاج إضافة الأوقات والأيام
+                </span>
+            @endif
+        </p>
+    </div>    <div class="btn-group">
         <a href="{{ route('teacher.lessons.edit', $lesson) }}" class="btn btn-warning">
-            <i class="fas fa-edit"></i> تعديل الدرس
+            <i class="fas fa-edit"></i> 
+            @if($lesson->day_of_week && $lesson->start_time)
+                تعديل الدرس
+            @else
+                إكمال إعداد الدرس
+            @endif
         </a>
+        @if($lesson->day_of_week && $lesson->start_time)
         <a href="{{ route('teacher.lessons.manage-students', $lesson) }}" class="btn btn-success">
             <i class="fas fa-users"></i> إدارة الطلاب
+        </a>        <a href="{{ route('teacher.lessons.qr.display', $lesson) }}" class="btn btn-primary" target="_blank">
+            <i class="fas fa-qrcode"></i> QR Code للحضور
         </a>
+        @endif
         <a href="{{ route('teacher.lessons.index') }}" class="btn btn-outline-secondary">
             <i class="fas fa-arrow-left"></i> العودة للدروس
         </a>
     </div>
 </div>
+
+@if(!$lesson->day_of_week || !$lesson->start_time)
+<div class="alert alert-warning mb-4">
+    <i class="fas fa-info-circle me-2"></i>
+    <strong>يحتاج إكمال الإعداد:</strong> 
+    هذا الدرس يحتاج إضافة معلومات إضافية مثل الأوقات والأيام. 
+    <a href="{{ route('teacher.lessons.edit', $lesson) }}" class="alert-link">اضغط هنا لإكمال الإعداد</a>
+</div>
+@endif
 
 <div class="row">
     <!-- معلومات الدرس -->
@@ -36,42 +73,46 @@
                     <div class="col-md-6">
                         <table class="table table-borderless">
                             <tr>
-                                <td class="fw-bold">اسم الدرس:</td>
-                                <td>{{ $lesson->name }}</td>
-                            </tr>
-                            <tr>
                                 <td class="fw-bold">المادة:</td>
                                 <td><span class="badge bg-primary">{{ $lesson->subject }}</span></td>
-                            </tr>
-                            <tr>
+                            </tr>                            <tr>
                                 <td class="fw-bold">يوم الأسبوع:</td>
-                                <td>{{ ucfirst($lesson->day_of_week) }}</td>
-                            </tr>
-                            <tr>
+                                <td>
+                                    @if($lesson->day_of_week)
+                                        @php
+                                            $daysOfWeek = [
+                                                'sunday' => 'الأحد',
+                                                'monday' => 'الاثنين',
+                                                'tuesday' => 'الثلاثاء',
+                                                'wednesday' => 'الأربعاء',
+                                                'thursday' => 'الخميس',
+                                                'friday' => 'الجمعة',
+                                                'saturday' => 'السبت',
+                                            ];
+                                        @endphp
+                                        {{ $daysOfWeek[$lesson->day_of_week] ?? $lesson->day_of_week }}
+                                    @else
+                                        <span class="text-muted">غير محدد</span>
+                                    @endif
+                                </td>
+                            </tr><tr>
                                 <td class="fw-bold">الوقت:</td>
                                 <td>
-                                    <i class="fas fa-clock text-info"></i>
-                                    {{ \Carbon\Carbon::parse($lesson->start_time)->format('H:i') }} - 
-                                    {{ \Carbon\Carbon::parse($lesson->end_time)->format('H:i') }}
-                                </td>
-                            </tr>
-                        </table>
-                    </div>
-                    <div class="col-md-6">
-                        <table class="table table-borderless">
-                            <tr>
-                                <td class="fw-bold">القاعة:</td>
-                                <td>
-                                    @if($lesson->classroom)
-                                        <i class="fas fa-door-open text-success"></i> {{ $lesson->classroom }}
+                                    @if($lesson->start_time && $lesson->end_time)
+                                        <i class="fas fa-clock text-info"></i>
+                                        {{ \Carbon\Carbon::parse($lesson->start_time)->format('H:i') }} - 
+                                        {{ \Carbon\Carbon::parse($lesson->end_time)->format('H:i') }}
                                     @else
                                         <span class="text-muted">غير محدد</span>
                                     @endif
                                 </td>
                             </tr>
+                        </table>
+                    </div>                    <div class="col-md-6">
+                        <table class="table table-borderless">
                             <tr>
                                 <td class="fw-bold">عدد الطلاب:</td>
-                                <td>{{ $lesson->students_count }}/{{ $lesson->max_students ?? 30 }}</td>
+                                <td>{{ $lesson->students_count }}</td>
                             </tr>
                             <tr>
                                 <td class="fw-bold">الحالة:</td>
@@ -143,15 +184,14 @@
                     <div class="progress">
                         <div class="progress-bar bg-success" style="width: {{ $attendanceStats['attendance_rate'] }}%"></div>
                     </div>
-                </div>
-                @else
+                </div>                @else
                 <div class="text-center py-4">
                     <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
                     <h6 class="text-muted">لا توجد سجلات حضور بعد</h6>
-                    <p class="text-muted">ابدأ بتسجيل حضور الطلاب لهذا الدرس</p>
-                    <a href="{{ route('teacher.attendances.create', ['lesson_id' => $lesson->id]) }}" class="btn btn-success">
-                        <i class="fas fa-plus"></i> تسجيل حضور الآن
-                    </a>
+                    <p class="text-muted">يمكن للطلاب تسجيل الحضور باستخدام QR Code</p>
+                    <div class="alert alert-info">
+                        <i class="fas fa-qrcode"></i> تسجيل الحضور متاح فقط للطلاب عبر QR Code
+                    </div>
                 </div>
                 @endif
             </div>
@@ -239,17 +279,11 @@
                     <i class="fas fa-bolt"></i>
                     إجراءات سريعة
                 </h6>
-            </div>
-            <div class="card-body">
+            </div>            <div class="card-body">
                 <div class="d-grid gap-2">
-                    <a href="{{ route('teacher.attendances.create', ['lesson_id' => $lesson->id]) }}" 
-                       class="btn btn-primary">
-                        <i class="fas fa-user-check"></i> تسجيل حضور فردي
-                    </a>
-                    <a href="{{ route('teacher.attendances.bulk', ['lesson_id' => $lesson->id]) }}" 
-                       class="btn btn-success">
-                        <i class="fas fa-list-check"></i> تسجيل حضور جماعي
-                    </a>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> يمكن للطلاب فقط تسجيل الحضور عبر QR Code
+                    </div>
                     <a href="{{ route('teacher.lessons.manage-students', $lesson) }}" 
                        class="btn btn-info">
                         <i class="fas fa-users"></i> إدارة طلاب الدرس

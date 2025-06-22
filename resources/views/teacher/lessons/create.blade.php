@@ -28,40 +28,28 @@
                 <form action="{{ route('teacher.lessons.store') }}" method="POST">
                     @csrf
                       <div class="row">
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-12 mb-3">
                             <label for="subject" class="form-label">المادة <span class="text-danger">*</span></label>
-                            <select class="form-select @error('subject') is-invalid @enderror" 
-                                    id="subject" 
-                                    name="subject" 
-                                    required>
-                                <option value="">اختر المادة</option>
+                            <input type="text" 
+                                   class="form-control @error('subject') is-invalid @enderror" 
+                                   id="subject" 
+                                   name="subject" 
+                                   value="{{ old('subject') }}"
+                                   placeholder="اكتب اسم المادة (مثال: الرياضيات، العلوم...)"
+                                   required
+                                   list="subjects-list">
+                            
+                            <!-- قائمة المواد المقترحة -->
+                            <datalist id="subjects-list">
                                 @foreach($subjects as $subject)
-                                    <option value="{{ $subject }}" {{ old('subject') === $subject ? 'selected' : '' }}>
-                                        {{ $subject }}
-                                    </option>
+                                    <option value="{{ $subject }}">
                                 @endforeach
-                            </select>
+                            </datalist>
+                            
                             @error('subject')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
-                        </div>
-
-                        <div class="col-md-6 mb-3">
-                            <label for="grade" class="form-label">الصف <span class="text-danger">*</span></label>
-                            <select class="form-select @error('grade') is-invalid @enderror" 
-                                    id="grade" 
-                                    name="grade" 
-                                    required>
-                                <option value="">اختر الصف</option>
-                                @foreach(['الأول', 'الثاني', 'الثالث', 'الرابع', 'الخامس', 'السادس', 'السابع', 'الثامن', 'التاسع', 'العاشر', 'الحادي عشر', 'الثاني عشر'] as $gradeOption)
-                                    <option value="{{ $gradeOption }}" {{ old('grade') === $gradeOption ? 'selected' : '' }}>
-                                        {{ $gradeOption }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('grade')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
+                            <small class="form-text text-muted">يمكنك كتابة أي مادة تريدها</small>
                         </div>
                     </div>
 
@@ -108,7 +96,8 @@
                             @error('end_time')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
-                        </div>                    </div>
+                        </div>
+                    </div>
 
                     <div class="mb-3">
                         <label for="description" class="form-label">وصف الدرس</label>
@@ -139,7 +128,8 @@
                     </div>
                 </form>
             </div>
-        </div>    </div>
+        </div>
+    </div>
 
     <div class="col-lg-4">
         <!-- معاينة الجدول -->
@@ -163,14 +153,16 @@
                     @foreach($currentLessons as $lesson)
                     <div class="d-flex justify-content-between align-items-center mb-2 p-2 border rounded">
                         <div>
-                            <small class="fw-bold">{{ $lesson->name }}</small>
+                            <small class="fw-bold">{{ $lesson->subject }}</small>
+                            @if($lesson->day_of_week && $lesson->start_time)
                             <br>
                             <small class="text-muted">
                                 {{ ucfirst($lesson->day_of_week) }} - 
                                 {{ \Carbon\Carbon::parse($lesson->start_time)->format('H:i') }}
                             </small>
+                            @endif
                         </div>
-                        <span class="badge bg-primary">{{ $lesson->subject }}</span>
+                        <span class="badge bg-primary">{{ $lesson->students_count }} طالب</span>
                     </div>
                     @endforeach
                 @else
@@ -214,6 +206,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     startTimeInput.addEventListener('change', validateTimes);
     endTimeInput.addEventListener('change', validateTimes);
+    
+    // التركيز على حقل المادة
+    document.getElementById('subject').focus();
 });
 </script>
 @endsection

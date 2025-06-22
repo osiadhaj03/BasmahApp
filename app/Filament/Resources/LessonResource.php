@@ -25,12 +25,11 @@ class LessonResource extends Resource
     protected static ?string $pluralModelLabel = 'الدروس';    public static function form(Form $form): Form
     {
         return $form
-            ->schema([
-                Forms\Components\TextInput::make('name')
+            ->schema([                Forms\Components\TextInput::make('name')
                     ->label('اسم الدرس')
                     ->required()
                     ->maxLength(255)
-                    ->placeholder('مثال: الرياضيات - الصف الأول'),
+                    ->placeholder('مثال: الرياضيات'),
                     
                 Forms\Components\TextInput::make('subject')
                     ->label('المادة')

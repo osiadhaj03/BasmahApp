@@ -23,14 +23,29 @@
                     <i class="fas fa-edit"></i>
                     بيانات الدرس
                 </h5>
-            </div>
-            <div class="card-body">
+            </div>            <div class="card-body">
+                @if($errors->any())
+                    <div class="alert alert-danger">
+                        <h6><i class="fas fa-exclamation-triangle"></i> يرجى تصحيح الأخطاء التالية:</h6>
+                        <ul class="mb-0">
+                            @foreach($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+                
+                @if(session('success'))
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle"></i> {{ session('success') }}
+                    </div>
+                @endif
+
                 <form action="{{ route('teacher.lessons.update', $lesson) }}" method="POST">
                     @csrf
                     @method('PUT')
-                    
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
+                      <div class="row">
+                        <div class="col-md-12 mb-3">
                             <label for="subject" class="form-label">المادة <span class="text-danger">*</span></label>
                             <input type="text" 
                                    class="form-control @error('subject') is-invalid @enderror" 
@@ -42,37 +57,16 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
-
-                        <div class="col-md-6 mb-3">
-                            <label for="grade" class="form-label">الصف <span class="text-danger">*</span></label>
-                            <select class="form-select @error('grade') is-invalid @enderror" 
-                                    id="grade" 
-                                    name="grade" 
-                                    required>
-                                <option value="">اختر الصف</option>
-                                @foreach(['الأول', 'الثاني', 'الثالث', 'الرابع', 'الخامس', 'السادس', 'السابع', 'الثامن', 'التاسع', 'العاشر', 'الحادي عشر', 'الثاني عشر'] as $gradeOption)
-                                    <option value="{{ $gradeOption }}" 
-                                            {{ old('grade', $lesson->grade) == $gradeOption ? 'selected' : '' }}>
-                                        {{ $gradeOption }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('grade')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-                    </div>                    <div class="row">
-                        <div class="col-md-4 mb-3">
+                    </div><div class="row">                        <div class="col-md-4 mb-3">
                             <label for="day_of_week" class="form-label">يوم الأسبوع <span class="text-danger">*</span></label>
                             <select class="form-select @error('day_of_week') is-invalid @enderror" 
                                     id="day_of_week" 
                                     name="day_of_week" 
                                     required>
                                 <option value="">اختر اليوم</option>
-                                @foreach(['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'] as $day)
-                                    <option value="{{ $day }}" 
-                                            {{ old('day_of_week', $lesson->day_of_week) == $day ? 'selected' : '' }}>
-                                        {{ $day }}
+                                @foreach($daysOfWeek as $value => $label)
+                                    <option value="{{ $value }}" {{ old('day_of_week', $lesson->day_of_week) === $value ? 'selected' : '' }}>
+                                        {{ $label }}
                                     </option>
                                 @endforeach
                             </select>
@@ -116,13 +110,12 @@
                         @error('description')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="status" class="form-label">حالة الدرس</label>
+                    </div>                    <div class="mb-3">
+                        <label for="status" class="form-label">حالة الدرس <span class="text-danger">*</span></label>
                         <select class="form-select @error('status') is-invalid @enderror" 
                                 id="status" 
-                                name="status">
+                                name="status"
+                                required>
                             <option value="active" {{ old('status', $lesson->status) == 'active' ? 'selected' : '' }}>
                                 نشط
                             </option>
@@ -133,11 +126,6 @@
                         @error('status')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
-                    </div>
-                            @error('status')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
                     </div>
 
                     <div class="d-flex justify-content-between">

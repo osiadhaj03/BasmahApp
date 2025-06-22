@@ -155,15 +155,22 @@ function scanQRCode() {
 function processQRCode(qrData) {
     showMessage('تم اكتشاف QR Code، جاري التحقق...', 'info');
     
-    fetch('{{ route("student.qr.scan") }}', {
-        method: 'POST',
+    // Extract token from URL if it's a URL
+    let token = qrData;
+    if (qrData.includes('token=')) {
+        const urlParams = new URLSearchParams(qrData.split('?')[1]);
+        token = urlParams.get('token');
+    }
+    
+    // إنشاء URL مع المعاملات
+    const url = '{{ route("attendance.scan") }}?token=' + encodeURIComponent(token);
+    
+    fetch(url, {
+        method: 'GET',
         headers: {
             'Content-Type': 'application/json',
             'X-CSRF-TOKEN': '{{ csrf_token() }}'
-        },
-        body: JSON.stringify({
-            qr_data: qrData
-        })
+        }
     })
     .then(response => response.json())
     .then(data => {
@@ -244,11 +251,17 @@ function showAttendanceDetails(data) {
             </div>
             <div class="card-body">
                 <div class="row">
-                    <div class="col-6">
+                    <div class="col-sm-6">
                         <strong>الدرس:</strong> ${data.lesson_name}
                     </div>
-                    <div class="col-6">
+                    <div class="col-sm-6">
+                        <strong>المادة:</strong> ${data.subject || 'غير محدد'}
+                    </div>
+                    <div class="col-sm-6">
                         <strong>الوقت:</strong> ${data.time}
+                    </div>
+                    <div class="col-sm-6">
+                        <strong>ID الحضور:</strong> ${data.attendance_id}
                     </div>
                 </div>
                 <div class="mt-3 text-center">

@@ -98,15 +98,13 @@
                             <h5 class="card-title mb-0">
                                 <i class="fas fa-lightning-bolt me-2"></i>إجراءات سريعة
                             </h5>
-                        </div>
-                        <div class="card-body">
-                            <a href="{{ route('admin.attendances.create', ['lesson_id' => $lesson->id]) }}" 
-                               class="btn btn-success btn-block mb-2">
-                                <i class="fas fa-plus me-2"></i>تسجيل حضور جديد
-                            </a>
+                        </div>                        <div class="card-body">
+                            <div class="alert alert-info mb-2">
+                                <i class="fas fa-qrcode me-2"></i>تسجيل الحضور متاح للطلاب فقط عبر QR Code
+                            </div>
                             <a href="{{ route('admin.attendances.index', ['lesson_id' => $lesson->id]) }}" 
                                class="btn btn-info btn-block">
-                                <i class="fas fa-list me-2"></i>عرض سجلات الحضور
+                                <i class="fas fa-list me-2"></i>مراجعة سجلات الحضور
                             </a>
                         </div>
                     </div>

@@ -120,8 +120,7 @@
                             <h5 class="card-title mb-0">
                                 <i class="fas fa-lightning-bolt me-2"></i>إجراءات سريعة
                             </h5>
-                        </div>
-                        <div class="card-body">
+                        </div>                        <div class="card-body">
                             <a href="{{ route('admin.attendances.edit', $attendance) }}" 
                                class="btn btn-warning btn-block mb-2">
                                 <i class="fas fa-edit me-2"></i>تعديل السجل
@@ -130,10 +129,9 @@
                                class="btn btn-info btn-block mb-2">
                                 <i class="fas fa-book me-2"></i>عرض الدرس
                             </a>
-                            <a href="{{ route('admin.attendances.create', ['lesson_id' => $attendance->lesson_id]) }}" 
-                               class="btn btn-success btn-block">
-                                <i class="fas fa-plus me-2"></i>تسجيل حضور جديد
-                            </a>
+                            <div class="alert alert-info">
+                                <i class="fas fa-qrcode me-2"></i>تسجيل الحضور متاح للطلاب فقط عبر QR Code
+                            </div>
                         </div>
                     </div>
 

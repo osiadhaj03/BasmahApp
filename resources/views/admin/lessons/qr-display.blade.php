@@ -68,30 +68,39 @@
                                 </div>
                             </div>
                         </div>
-                        
-                        <div class="col-md-6">
+                          <div class="col-md-6">
                             <div class="qr-container">
                                 <h6 class="text-muted mb-3">QR Code للحضور</h6>
-                                <div class="qr-code-display bg-light p-4 rounded">
-                                    {!! $qrCode !!}
+                                
+                                <div class="qr-status mb-3">
+                                    <div id="token-status" class="alert alert-info">
+                                        <i class="fas fa-clock me-2"></i>
+                                        <span id="status-text">جاري تحميل معلومات QR...</span>
+                                    </div>
+                                    <div id="timer-display" class="text-center mb-2">
+                                        <span class="badge bg-primary fs-6" id="countdown-timer">--:--</span>
+                                    </div>
                                 </div>
+                                
+                                <div class="qr-code-display bg-light p-4 rounded" id="qr-container">
+                                    <div class="text-center">
+                                        <div class="spinner-border" role="status">
+                                            <span class="visually-hidden">جاري التحميل...</span>
+                                        </div>
+                                        <p class="mt-2">جاري توليد QR Code...</p>
+                                    </div>
+                                </div>
+                                
                                 <p class="text-muted mt-3">
                                     <i class="fas fa-info-circle me-1"></i>
-                                    اطلب من الطلاب مسح هذا الكود لتسجيل الحضور
+                                    <strong>QR Code صالح لمدة 15 دقيقة فقط</strong><br>
+                                    <small>اطلب من الطلاب مسح الكود لتسجيل الحضور</small>
                                 </p>
                                 
                                 <div class="mt-4">
-                                    <a href="{{ route('admin.lessons.qr.display', $lesson) }}" 
-                                       class="btn btn-success btn-lg" target="_blank">
-                                        <i class="fas fa-expand me-2"></i>
-                                        عرض في الشاشة الكاملة
-                                    </a>
-                                </div>
-                                
-                                <div class="mt-3">
-                                    <button class="btn btn-primary" onclick="refreshQR()">
+                                    <button class="btn btn-success btn-lg" onclick="generateNewQR()" id="refresh-btn">
                                         <i class="fas fa-sync-alt me-2"></i>
-                                        تجديد QR Code
+                                        توليد QR جديد
                                     </button>
                                 </div>
                             </div>
@@ -145,15 +154,14 @@
                         <a href="{{ route('admin.lessons.index') }}" class="btn btn-secondary">
                             <i class="fas fa-arrow-right me-2"></i>
                             العودة للدروس
-                        </a>
-                        <div>
+                        </a>                        <div>
                             <a href="{{ route('admin.lessons.show', $lesson) }}" class="btn btn-info">
                                 <i class="fas fa-eye me-2"></i>
                                 عرض الدرس
                             </a>
-                            <a href="{{ route('admin.attendances.create') }}?lesson_id={{ $lesson->id }}" class="btn btn-primary">
-                                <i class="fas fa-plus me-2"></i>
-                                تسجيل حضور يدوي
+                            <a href="{{ route('admin.attendances.index') }}?lesson_id={{ $lesson->id }}" class="btn btn-primary">
+                                <i class="fas fa-list me-2"></i>
+                                مراجعة الحضور
                             </a>
                         </div>
                     </div>
@@ -164,8 +172,148 @@
 </div>
 
 <script>
-function refreshQR() {
-    window.location.reload();
+let currentTimer;
+let tokenData = null;
+
+// Initialize QR display
+document.addEventListener('DOMContentLoaded', function() {
+    checkQRStatus();
+    // تحديث حالة QR كل 10 ثوانٍ
+    setInterval(checkQRStatus, 10000);
+});
+
+function checkQRStatus() {
+    fetch('{{ route("admin.lessons.qr.info", $lesson) }}')
+        .then(response => response.json())
+        .then(data => {
+            tokenData = data;
+            updateQRDisplay(data);
+            if (data.has_valid_token && data.token_remaining_minutes > 0) {
+                loadQRImage();
+                startCountdown(data.token_remaining_minutes);
+            } else {
+                showExpiredQR();
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showErrorQR();
+        });
+}
+
+function updateQRDisplay(data) {
+    const statusEl = document.getElementById('status-text');
+    const timerEl = document.getElementById('countdown-timer');
+    const alertEl = document.getElementById('token-status');
+    
+    if (data.has_valid_token) {
+        statusEl.textContent = 'QR Code نشط - صالح للاستخدام';
+        alertEl.className = 'alert alert-success';
+        timerEl.textContent = formatTime(data.token_remaining_minutes);
+    } else {
+        statusEl.textContent = 'QR Code منتهي الصلاحية - يحتاج توليد جديد';
+        alertEl.className = 'alert alert-warning';
+        timerEl.textContent = '00:00';
+    }
+}
+
+function loadQRImage() {
+    const container = document.getElementById('qr-container');
+    if (tokenData && tokenData.qr_url) {
+        container.innerHTML = `
+            <img src="${tokenData.qr_url}?t=${Date.now()}" 
+                 alt="QR Code" 
+                 class="img-fluid" 
+                 style="max-width: 300px;"
+                 onerror="showErrorQR()">
+        `;
+    }
+}
+
+function showExpiredQR() {
+    const container = document.getElementById('qr-container');
+    container.innerHTML = `
+        <div class="text-center p-4">
+            <i class="fas fa-clock text-warning" style="font-size: 4rem;"></i>
+            <h5 class="mt-3">QR Code منتهي الصلاحية</h5>
+            <p class="text-muted">اضغط على "توليد QR جديد" للبدء</p>
+        </div>
+    `;
+    clearTimeout(currentTimer);
+}
+
+function showErrorQR() {
+    const container = document.getElementById('qr-container');
+    container.innerHTML = `
+        <div class="text-center p-4">
+            <i class="fas fa-exclamation-triangle text-danger" style="font-size: 4rem;"></i>
+            <h5 class="mt-3">خطأ في تحميل QR Code</h5>
+            <p class="text-muted">يرجى المحاولة مرة أخرى</p>
+        </div>
+    `;
+}
+
+function generateNewQR() {
+    const refreshBtn = document.getElementById('refresh-btn');
+    refreshBtn.disabled = true;
+    refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>جاري التوليد...';
+    
+    fetch('{{ route("admin.lessons.qr.refresh", $lesson) }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // إعادة تحميل معلومات QR
+            setTimeout(() => {
+                checkQRStatus();
+                refreshBtn.disabled = false;
+                refreshBtn.innerHTML = '<i class="fas fa-sync-alt me-2"></i>توليد QR جديد';
+            }, 1000);
+        } else {
+            alert('حدث خطأ في توليد QR جديد');
+            refreshBtn.disabled = false;
+            refreshBtn.innerHTML = '<i class="fas fa-sync-alt me-2"></i>توليد QR جديد';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('حدث خطأ في الاتصال');
+        refreshBtn.disabled = false;
+        refreshBtn.innerHTML = '<i class="fas fa-sync-alt me-2"></i>توليد QR جديد';
+    });
+}
+
+function startCountdown(minutes) {
+    clearTimeout(currentTimer);
+    let totalSeconds = minutes * 60;
+    
+    function updateTimer() {
+        const mins = Math.floor(totalSeconds / 60);
+        const secs = totalSeconds % 60;
+        document.getElementById('countdown-timer').textContent = 
+            `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        
+        if (totalSeconds <= 0) {
+            showExpiredQR();
+            return;
+        }
+        
+        totalSeconds--;
+        currentTimer = setTimeout(updateTimer, 1000);
+    }
+    
+    updateTimer();
+}
+
+function formatTime(minutes) {
+    const mins = Math.floor(minutes);
+    const secs = Math.round((minutes - mins) * 60);
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 }
 
 // Update attendance stats every 30 seconds
@@ -174,12 +322,7 @@ setInterval(function() {
 }, 30000);
 
 function updateAttendanceStats() {
-    fetch('{{ route("admin.lessons.qr.info", $lesson) }}')
-        .then(response => response.json())
-        .then(data => {
-            // Update stats here if we add this functionality
-        })
-        .catch(error => console.error('Error:', error));
+    // يمكن إضافة تحديث إحصائيات الحضور هنا لاحقاً
 }
 </script>
 @endsection

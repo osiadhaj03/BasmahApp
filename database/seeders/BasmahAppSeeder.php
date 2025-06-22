@@ -50,7 +50,7 @@ class BasmahAppSeeder extends Seeder
             ]);
         }        // Create Lessons
         $mathLesson = Lesson::create([
-            'name' => 'الرياضيات - الصف الأول',
+            'name' => 'الرياضيات',
             'subject' => 'الرياضيات',
             'teacher_id' => $teacher1->id,
             'day_of_week' => 'sunday',

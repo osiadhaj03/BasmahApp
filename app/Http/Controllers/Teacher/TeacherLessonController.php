@@ -70,24 +70,23 @@ class TeacherLessonController extends Controller
         ];
 
         return view('teacher.lessons.create', compact('teacher', 'daysOfWeek', 'subjects'));
-    }
-
-    /**
+    }    /**
      * حفظ درس جديد
      */
     public function store(Request $request)
     {
         $teacher = auth()->user();
           $validated = $request->validate([
-            'subject' => 'required|string|max:100',
-            'grade' => 'required|string|max:50',
+            'subject' => 'required|string|max:100|min:2',
             'day_of_week' => 'required|in:sunday,monday,tuesday,wednesday,thursday,friday,saturday',
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i|after:start_time',
             'description' => 'nullable|string|max:1000',
         ], [
             'subject.required' => 'المادة مطلوبة',
-            'grade.required' => 'الصف مطلوب',
+            'subject.string' => 'المادة يجب أن تكون نص',
+            'subject.max' => 'اسم المادة طويل جداً (الحد الأقصى 100 حرف)',
+            'subject.min' => 'اسم المادة قصير جداً (الحد الأدنى حرفان)',
             'day_of_week.required' => 'يوم الأسبوع مطلوب',
             'start_time.required' => 'وقت البداية مطلوب',
             'end_time.required' => 'وقت النهاية مطلوب',
@@ -106,20 +105,23 @@ class TeacherLessonController extends Controller
                           $q->where('start_time', '<=', $validated['start_time'])
                             ->where('end_time', '>=', $validated['end_time']);
                       });
-            })->first();        if ($conflictingLesson) {
+            })->first();
+
+        if ($conflictingLesson) {
             return back()->withErrors([
                 'time_conflict' => 'يوجد تعارض في الوقت مع درس آخر: ' . $conflictingLesson->subject
             ])->withInput();
-        }
+        }        // تنظيف اسم المادة
+        $subject = trim($validated['subject']);
+        $subject = ucfirst($subject);
 
-        // إنشاء اسم للدرس من المادة والصف
-        $lessonName = $validated['subject'] . ' - ' . $validated['grade'];
+        // إنشاء اسم للدرس من المادة فقط
+        $lessonName = $subject;
 
         // إنشاء الدرس
         $lesson = Lesson::create([
             'name' => $lessonName,
-            'subject' => $validated['subject'],
-            'grade' => $validated['grade'],
+            'subject' => $subject,
             'teacher_id' => $teacher->id,
             'day_of_week' => $validated['day_of_week'],
             'start_time' => $validated['start_time'] . ':00',
@@ -224,15 +226,13 @@ class TeacherLessonController extends Controller
             abort(403, 'ليس لديك صلاحية لتعديل هذا الدرس');
         }        $validated = $request->validate([
             'subject' => 'required|string|max:100',
-            'grade' => 'required|string|max:50',
             'day_of_week' => 'required|in:sunday,monday,tuesday,wednesday,thursday,friday,saturday',
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i|after:start_time',
             'description' => 'nullable|string|max:1000',
-            'status' => 'required|in:active,inactive',
+            'status' => 'nullable|in:active,inactive',
         ], [
             'subject.required' => 'المادة مطلوبة',
-            'grade.required' => 'الصف مطلوب',
             'day_of_week.required' => 'يوم الأسبوع مطلوب',
             'start_time.required' => 'وقت البداية مطلوب',
             'end_time.required' => 'وقت النهاية مطلوب',
@@ -254,22 +254,22 @@ class TeacherLessonController extends Controller
             return back()->withErrors([
                 'time_conflict' => 'يوجد تعارض في الوقت مع درس آخر: ' . $conflictingLesson->subject
             ])->withInput();
-        }
-
-        // إنشاء اسم جديد للدرس من المادة والصف
-        $lessonName = $validated['subject'] . ' - ' . $validated['grade'];
-
-        // تحديث الدرس
-        $lesson->update([
-            'name' => $lessonName,
+        }        // تحديث الدرس
+        $updateData = [
+            'name' => $validated['subject'],
             'subject' => $validated['subject'],
-            'grade' => $validated['grade'],
             'day_of_week' => $validated['day_of_week'],
             'start_time' => $validated['start_time'] . ':00',
             'end_time' => $validated['end_time'] . ':00',
             'description' => $validated['description'],
-            'status' => $validated['status'],
-        ]);
+        ];
+
+        // إضافة الحالة إذا تم تمريرها
+        if (isset($validated['status'])) {
+            $updateData['status'] = $validated['status'];
+        }
+
+        $lesson->update($updateData);
 
         return redirect()->route('teacher.lessons.index')
             ->with('success', 'تم تحديث الدرس بنجاح: ' . $lesson->name);
@@ -388,10 +388,8 @@ class TeacherLessonController extends Controller
         // التحقق من أن المستخدم طالب
         if ($student->role !== 'student') {
             return back()->withErrors(['error' => 'المستخدم المحدد ليس طالباً']);
-        }
-
-        // التحقق من عدم تسجيل الطالب مسبقاً
-        if ($lesson->students()->where('user_id', $student->id)->exists()) {
+        }        // التحقق من عدم تسجيل الطالب مسبقاً
+        if ($lesson->students()->where('users.id', $student->id)->exists()) {
             return back()->withErrors(['error' => 'الطالب مسجل بالفعل في هذا الدرس']);
         }
 
@@ -415,10 +413,8 @@ class TeacherLessonController extends Controller
         
         if ($lesson->teacher_id !== $teacher->id) {
             abort(403, 'ليس لديك صلاحية لإدارة هذا الدرس');
-        }
-
-        // التحقق من أن الطالب مسجل في الدرس
-        if (!$lesson->students()->where('user_id', $student->id)->exists()) {
+        }        // التحقق من أن الطالب مسجل في الدرس
+        if (!$lesson->students()->where('users.id', $student->id)->exists()) {
             return back()->withErrors(['error' => 'الطالب غير مسجل في هذا الدرس']);
         }
 
@@ -481,5 +477,69 @@ class TeacherLessonController extends Controller
         });
 
         return back()->with('success', 'تم إزالة جميع الطلاب (' . $studentsCount . ' طالب) بنجاح');
+    }
+
+    /**
+     * الحصول على طلاب الدرس (للـ AJAX)
+     */
+    public function getStudents(Lesson $lesson)
+    {
+        $teacher = auth()->user();
+        
+        // التحقق من الصلاحيات
+        if ($lesson->teacher_id !== $teacher->id) {
+            return response()->json([
+                'success' => false,
+                'error' => 'غير مسموح لك بالوصول لهذا الدرس'
+            ], 403);
+        }
+        
+        try {
+            $students = $lesson->students()->select('id', 'name')->get();
+            
+            return response()->json([
+                'success' => true,
+                'students' => $students
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => 'خطأ في تحميل بيانات الطلاب: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * جلب دروس الطالب
+     */
+    public function getStudentLessons(User $student)
+    {
+        $teacher = auth()->user();
+        
+        // التحقق من أن المستخدم المحدد هو طالب
+        if ($student->role !== 'student') {
+            return response()->json([
+                'success' => false,
+                'error' => 'المستخدم المحدد ليس طالباً'
+            ], 400);
+        }
+        
+        try {
+            // جلب دروس الطالب التي يدرسها هذا المعلم فقط
+            $lessons = $student->lessons()
+                ->where('teacher_id', $teacher->id)
+                ->select('id', 'subject', 'name')
+                ->get();
+            
+            return response()->json([
+                'success' => true,
+                'lessons' => $lessons
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => 'خطأ في تحميل بيانات الدروس: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }
