@@ -26,11 +26,9 @@ class StudentController extends Controller
           // جلب الدروس التي لديها جلسات اليوم
         $today = Carbon::today();
         $currentDayOfWeek = strtolower($today->format('l')); // monday, tuesday, etc.
-        
-        $todayLessons = $lessons->filter(function($lesson) use ($currentDayOfWeek) {
-            // تحقق من وجود schedule_time للدرس ومطابقة day_of_week
-            return $lesson->schedule_time !== null && 
-                   strtolower($lesson->day_of_week) === $currentDayOfWeek;
+          $todayLessons = $lessons->filter(function($lesson) use ($currentDayOfWeek) {
+            // تحقق من مطابقة day_of_week للدرس
+            return strtolower($lesson->day_of_week) === $currentDayOfWeek;
         });
         
         // احصائيات الطالب

@@ -26,7 +26,7 @@ class Lesson extends Model
         'start_time',
         'end_time',
         'description',
-        'schedule_time',
+        'status',
         'qr_code',
         'qr_generated_at',
     ];
@@ -180,5 +180,51 @@ class Lesson extends Model
         } catch (\Exception $e) {
             return null;
         }
+    }
+
+    /**
+     * Get all available lesson statuses
+     */
+    public static function getStatuses()
+    {
+        return [
+            'scheduled' => 'مجدول',
+            'active' => 'نشط',
+            'completed' => 'مكتمل',
+            'cancelled' => 'ملغي'
+        ];
+    }
+
+    /**
+     * Get lesson status in Arabic
+     */
+    public function getStatusInArabic()
+    {
+        $statuses = self::getStatuses();
+        return $statuses[$this->status] ?? 'غير محدد';
+    }
+
+    /**
+     * Check if lesson is active
+     */
+    public function isActive()
+    {
+        return $this->status === 'active';
+    }
+
+    /**
+     * Check if lesson is completed
+     */
+    public function isCompleted()
+    {
+        return $this->status === 'completed';
+    }
+
+    /**
+     * Check if lesson is cancelled
+     */
+    public function isCancelled()
+    {
+        return $this->status === 'cancelled';
     }
 }

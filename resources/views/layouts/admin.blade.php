@@ -69,24 +69,50 @@
                     <small class="badge bg-light text-dark mt-2">
                         {{ auth()->user()->role === 'admin' ? 'مدير' : 'معلم' }}
                     </small>
-                </div>
-
-                <nav class="nav flex-column">
-                    <a class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}" 
-                       href="{{ route('admin.dashboard') }}">
-                        <i class="fas fa-tachometer-alt me-2"></i>
-                        الرئيسية
-                    </a>
-                    <a class="nav-link {{ request()->routeIs('admin.lessons.*') ? 'active' : '' }}" 
-                       href="{{ route('admin.lessons.index') }}">
-                        <i class="fas fa-book me-2"></i>
-                        الدروس
-                    </a>
-                    <a class="nav-link {{ request()->routeIs('admin.attendances.*') ? 'active' : '' }}" 
-                       href="{{ route('admin.attendances.index') }}">
-                        <i class="fas fa-clipboard-check me-2"></i>
-                        الحضور
-                    </a>
+                </div>                <nav class="nav flex-column">
+                    @if(auth()->user()->role === 'admin')
+                        <a class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}" 
+                           href="{{ route('admin.dashboard') }}">
+                            <i class="fas fa-tachometer-alt me-2"></i>
+                            الرئيسية
+                        </a>
+                        <a class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}" 
+                           href="{{ route('admin.users.index') }}">
+                            <i class="fas fa-users me-2"></i>
+                            المستخدمين
+                        </a>
+                        <a class="nav-link {{ request()->routeIs('admin.lessons.*') ? 'active' : '' }}" 
+                           href="{{ route('admin.lessons.index') }}">
+                            <i class="fas fa-book me-2"></i>
+                            الدروس
+                        </a>
+                        <a class="nav-link {{ request()->routeIs('admin.attendances.*') ? 'active' : '' }}" 
+                           href="{{ route('admin.attendances.index') }}">
+                            <i class="fas fa-clipboard-check me-2"></i>
+                            الحضور
+                        </a>
+                    @elseif(auth()->user()->role === 'teacher')
+                        <a class="nav-link {{ request()->routeIs('teacher.dashboard') ? 'active' : '' }}" 
+                           href="{{ route('teacher.dashboard') }}">
+                            <i class="fas fa-tachometer-alt me-2"></i>
+                            لوحة التحكم
+                        </a>
+                        <a class="nav-link {{ request()->routeIs('teacher.attendances.*') ? 'active' : '' }}" 
+                           href="{{ route('teacher.attendances.index') }}">
+                            <i class="fas fa-clipboard-check me-2"></i>
+                            الحضور والغياب
+                        </a>
+                        <a class="nav-link {{ request()->routeIs('teacher.attendances.create') ? 'active' : '' }}" 
+                           href="{{ route('teacher.attendances.create') }}">
+                            <i class="fas fa-plus me-2"></i>
+                            تسجيل حضور فردي
+                        </a>
+                        <a class="nav-link {{ request()->routeIs('teacher.attendances.bulk') ? 'active' : '' }}" 
+                           href="{{ route('teacher.attendances.bulk') }}">
+                            <i class="fas fa-list-check me-2"></i>
+                            تسجيل حضور جماعي
+                        </a>
+                    @endif
                 </nav>
 
                 <div class="mt-auto p-3">

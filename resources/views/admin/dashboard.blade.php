@@ -153,30 +153,35 @@
                     الإجراءات السريعة
                 </h5>
             </div>
-            <div class="card-body">
-                <div class="row">
+            <div class="card-body">                <div class="row">
                     <div class="col-md-6 mb-3">
-                        <a href="{{ route('admin.lessons.index') }}" class="btn btn-primary btn-lg w-100">
+                        <a href="{{ route('admin.users.index') }}" class="btn btn-primary btn-lg w-100">
+                            <i class="fas fa-users me-2"></i>
+                            إدارة المستخدمين
+                        </a>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <a href="{{ route('admin.lessons.index') }}" class="btn btn-success btn-lg w-100">
                             <i class="fas fa-book me-2"></i>
                             إدارة الدروس
                         </a>
                     </div>
                     <div class="col-md-6 mb-3">
-                        <a href="{{ route('admin.attendances.index') }}" class="btn btn-success btn-lg w-100">
+                        <a href="{{ route('admin.attendances.index') }}" class="btn btn-info btn-lg w-100">
                             <i class="fas fa-clipboard-check me-2"></i>
                             إدارة الحضور
                         </a>
                     </div>
                     <div class="col-md-6 mb-3">
-                        <a href="{{ route('admin.lessons.create') }}" class="btn btn-info btn-lg w-100">
-                            <i class="fas fa-plus me-2"></i>
-                            إضافة درس جديد
+                        <a href="{{ route('admin.users.create') }}" class="btn btn-warning btn-lg w-100">
+                            <i class="fas fa-user-plus me-2"></i>
+                            إضافة مستخدم
                         </a>
                     </div>
                     <div class="col-md-6 mb-3">
-                        <a href="{{ route('admin.attendances.create') }}" class="btn btn-warning btn-lg w-100">
-                            <i class="fas fa-user-check me-2"></i>
-                            تسجيل حضور
+                        <a href="{{ route('admin.lessons.create') }}" class="btn btn-secondary btn-lg w-100">
+                            <i class="fas fa-plus me-2"></i>
+                            إضافة درس جديد
                         </a>
                     </div>
                 </div>

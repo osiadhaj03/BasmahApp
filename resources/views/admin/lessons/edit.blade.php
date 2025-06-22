@@ -18,32 +18,18 @@
                     <form action="{{ route('admin.lessons.update', $lesson) }}" method="POST">
                         @csrf
                         @method('PUT')
-                        
-                        <div class="row">
+                          <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="name" class="form-label">اسم الدرس <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control @error('name') is-invalid @enderror" 
-                                           id="name" name="name" value="{{ old('name', $lesson->name) }}" required>
-                                    @error('name')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
-
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="subject" class="form-label">المادة</label>
+                                    <label for="subject" class="form-label">المادة <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control @error('subject') is-invalid @enderror" 
-                                           id="subject" name="subject" value="{{ old('subject', $lesson->subject) }}">
+                                           id="subject" name="subject" value="{{ old('subject', $lesson->subject ?: $lesson->name) }}" required>
                                     @error('subject')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
                             </div>
-                        </div>
 
-                        <div class="row">
                             @if(auth()->user()->role === 'admin')
                             <div class="col-md-6">
                                 <div class="mb-3">
@@ -62,17 +48,73 @@
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
-                            </div>
-                            @else
+                            </div>                            @else
                                 <input type="hidden" name="teacher_id" value="{{ auth()->user()->id }}">
                             @endif
+                        </div>
 
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="day_of_week" class="form-label">يوم الأسبوع <span class="text-danger">*</span></label>
+                                <select class="form-control @error('day_of_week') is-invalid @enderror" 
+                                        id="day_of_week" 
+                                        name="day_of_week" 
+                                        required>
+                                    <option value="">اختر اليوم</option>
+                                    <option value="sunday" @if(old('day_of_week', $lesson->day_of_week) == 'sunday') selected @endif>الأحد</option>
+                                    <option value="monday" @if(old('day_of_week', $lesson->day_of_week) == 'monday') selected @endif>الإثنين</option>
+                                    <option value="tuesday" @if(old('day_of_week', $lesson->day_of_week) == 'tuesday') selected @endif>الثلاثاء</option>
+                                    <option value="wednesday" @if(old('day_of_week', $lesson->day_of_week) == 'wednesday') selected @endif>الأربعاء</option>
+                                    <option value="thursday" @if(old('day_of_week', $lesson->day_of_week) == 'thursday') selected @endif>الخميس</option>
+                                    <option value="friday" @if(old('day_of_week', $lesson->day_of_week) == 'friday') selected @endif>الجمعة</option>
+                                    <option value="saturday" @if(old('day_of_week', $lesson->day_of_week) == 'saturday') selected @endif>السبت</option>
+                                </select>
+                                @error('day_of_week')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label for="start_time" class="form-label">وقت البداية <span class="text-danger">*</span></label>
+                                <input type="time" 
+                                       class="form-control @error('start_time') is-invalid @enderror" 
+                                       id="start_time" 
+                                       name="start_time" 
+                                       value="{{ old('start_time', $lesson->start_time ? $lesson->start_time->format('H:i') : '') }}" 
+                                       required>
+                                @error('start_time')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label for="end_time" class="form-label">وقت النهاية <span class="text-danger">*</span></label>
+                                <input type="time" 
+                                       class="form-control @error('end_time') is-invalid @enderror" 
+                                       id="end_time" 
+                                       name="end_time" 
+                                       value="{{ old('end_time', $lesson->end_time ? $lesson->end_time->format('H:i') : '') }}" 
+                                       required>
+                                @error('end_time')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>                        </div>
+
+                        <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="schedule_time" class="form-label">وقت الدرس</label>
-                                    <input type="time" class="form-control @error('schedule_time') is-invalid @enderror" 
-                                           id="schedule_time" name="schedule_time" value="{{ old('schedule_time', $lesson->schedule_time) }}">
-                                    @error('schedule_time')
+                                    <label for="status" class="form-label">حالة الدرس <span class="text-danger">*</span></label>
+                                    <select class="form-control @error('status') is-invalid @enderror" 
+                                            id="status" 
+                                            name="status" 
+                                            required>
+                                        <option value="">اختر حالة الدرس</option>
+                                        <option value="scheduled" @if(old('status', $lesson->status) == 'scheduled') selected @endif>مجدول</option>
+                                        <option value="active" @if(old('status', $lesson->status) == 'active') selected @endif>نشط</option>
+                                        <option value="completed" @if(old('status', $lesson->status) == 'completed') selected @endif>مكتمل</option>
+                                        <option value="cancelled" @if(old('status', $lesson->status) == 'cancelled') selected @endif>ملغي</option>
+                                    </select>
+                                    @error('status')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>

@@ -5,7 +5,9 @@ use App\Http\Controllers\Auth\AdminLoginController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\LessonController;
 use App\Http\Controllers\Admin\AttendanceController;
+use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Student\StudentController;
+use App\Http\Controllers\Teacher\TeacherDashboardController;
 use App\Http\Controllers\QRCodeController;
 
 Route::get('/', function () {
@@ -21,8 +23,20 @@ Route::prefix('admin')->group(function () {
     // Protected Admin Routes
     Route::middleware('admin')->group(function () {
         Route::get('dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
+        
+        // User Management Routes
+        Route::resource('users', UserController::class)->names('admin.users');
+        Route::get('teachers', [UserController::class, 'teachers'])->name('admin.users.teachers');
+        Route::get('students', [UserController::class, 'students'])->name('admin.users.students');
+        
+        // Lesson Management Routes
         Route::resource('lessons', LessonController::class)->names('admin.lessons');
         Route::resource('attendances', AttendanceController::class)->names('admin.attendances');
+        
+        // Attendance Routes
+        Route::get('attendances-bulk', [AttendanceController::class, 'bulk'])->name('admin.attendances.bulk');
+        Route::post('attendances-bulk', [AttendanceController::class, 'bulkStore'])->name('admin.attendances.bulk-store');
+        Route::get('attendances-reports', [AttendanceController::class, 'reports'])->name('admin.attendances.reports');
         Route::get('lessons/{lesson}/students', [AttendanceController::class, 'getStudents'])
             ->name('admin.lessons.students');
         
@@ -34,6 +48,20 @@ Route::prefix('admin')->group(function () {
         Route::get('lessons/{lesson}/qr-info', [QRCodeController::class, 'getLessonQRInfo'])
             ->name('admin.lessons.qr.info');
     });
+});
+
+// Teacher Routes
+Route::middleware('teacher')->group(function () {
+    Route::get('/teacher/dashboard', [TeacherDashboardController::class, 'dashboard'])->name('teacher.dashboard');
+    
+    // Teacher Attendance Management (view only for lessons they teach)
+    Route::get('/teacher/attendances', [AttendanceController::class, 'index'])->name('teacher.attendances.index');
+    Route::get('/teacher/attendances/create', [AttendanceController::class, 'create'])->name('teacher.attendances.create');
+    Route::post('/teacher/attendances', [AttendanceController::class, 'store'])->name('teacher.attendances.store');
+    Route::get('/teacher/attendances/bulk', [AttendanceController::class, 'bulk'])->name('teacher.attendances.bulk');
+    Route::post('/teacher/attendances/bulk', [AttendanceController::class, 'bulkStore'])->name('teacher.attendances.bulk-store');
+    Route::get('/teacher/lessons/{lesson}/students', [AttendanceController::class, 'getStudents'])
+        ->name('teacher.lessons.students');
 });
 
 // Student Routes

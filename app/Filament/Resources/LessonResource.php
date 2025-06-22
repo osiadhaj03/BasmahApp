@@ -67,16 +67,10 @@ class LessonResource extends Resource
                 Forms\Components\TimePicker::make('start_time')
                     ->label('وقت البداية')
                     ->required(),
-                    
-                Forms\Components\TimePicker::make('end_time')
+                      Forms\Components\TimePicker::make('end_time')
                     ->label('وقت النهاية')
                     ->required()
                     ->after('start_time'),
-                    
-                Forms\Components\TimePicker::make('schedule_time')
-                    ->label('وقت الجدولة')
-                    ->helperText('الوقت المحدد لبداية تسجيل الحضور')
-                    ->default(fn ($get) => $get('start_time')),
                     
                 Forms\Components\Textarea::make('description')
                     ->label('وصف الدرس')

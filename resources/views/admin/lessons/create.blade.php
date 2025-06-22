@@ -98,8 +98,38 @@
                            required>
                     @error('end_time')
                         <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="status" class="form-label">حالة الدرس <span class="text-danger">*</span></label>
+                    <select class="form-control @error('status') is-invalid @enderror" 
+                            id="status" 
+                            name="status" 
+                            required>
+                        <option value="">اختر حالة الدرس</option>
+                        <option value="scheduled" @if(old('status') == 'scheduled') selected @endif>مجدول</option>
+                        <option value="active" @if(old('status') == 'active') selected @endif>نشط</option>
+                        <option value="completed" @if(old('status') == 'completed') selected @endif>مكتمل</option>
+                        <option value="cancelled" @if(old('status') == 'cancelled') selected @endif>ملغي</option>
+                    </select>
+                    @error('status')
+                        <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="description" class="form-label">وصف الدرس</label>
+                <textarea class="form-control @error('description') is-invalid @enderror" 
+                          id="description" 
+                          name="description" 
+                          rows="4" 
+                          placeholder="أدخل وصف تفصيلي للدرس...">{{ old('description') }}</textarea>
+                @error('description')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
             </div>
 
             <div class="mb-3">

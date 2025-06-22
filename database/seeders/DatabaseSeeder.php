@@ -14,7 +14,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            BasmahAppSeeder::class,
+            CompleteSystemSeeder::class,
         ]);
     }
 }

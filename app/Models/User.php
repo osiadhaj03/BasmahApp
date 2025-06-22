@@ -81,6 +81,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Alias for teacherLessons for better naming
+     */
+    public function teachingLessons(): HasMany
+    {
+        return $this->hasMany(Lesson::class, 'teacher_id');
+    }
+
+    /**
      * Student's enrolled lessons relationship
      */
     public function studentLessons(): BelongsToMany
