@@ -49,6 +49,7 @@ class QrCodeController extends Controller
             
             $qrCode = QrCode::format('png')
                 ->size(300)
+                ->backend('GD')
                 ->errorCorrection('H')
                 ->generate($scanUrl);
 
@@ -179,7 +180,10 @@ class QrCodeController extends Controller
             }
 
             $validToken = $lesson->getValidQRToken();
-            $canGenerate = $lesson->canGenerateQR();
+            
+            // في بيئة التطوير، السماح بتوليد QR دائماً
+            $canGenerate = (env('APP_ENV') === 'local' || env('APP_DEBUG') === true) ? true : $lesson->canGenerateQR();
+            
             $timeUntil = $lesson->getTimeUntilQRGeneration();
             
             $response = [
@@ -192,12 +196,17 @@ class QrCodeController extends Controller
                 'token_remaining_minutes' => $validToken ? max(0, (int)$validToken->expires_at->diffInMinutes(now())) : 0,
                 'students_count' => $lesson->students()->count(),
                 'qr_url' => ($validToken && $canGenerate) ? route('qr.generate', $lesson->id) : null
-            ];            if (!$canGenerate) {
+            ];
+
+            if (!$canGenerate && env('APP_ENV') !== 'local') {
                 if ($timeUntil) {
                     $response['qr_availability_message'] = 'QR Code سيكون متاحاً مع بداية الدرس في ' . $timeUntil->format('Y-m-d H:i');
-                    $response['minutes_until_available'] = now()->diffInMinutes($timeUntil);                } else {
+                    $response['minutes_until_available'] = now()->diffInMinutes($timeUntil);
+                } else {
                     $response['qr_availability_message'] = 'QR Code متاح فقط خلال وقت الدرس (' . $this->getDayInArabic($lesson->day_of_week) . ' من ' . $lesson->start_time->format('H:i') . ' إلى ' . $lesson->end_time->format('H:i') . ')';
                 }
+            } elseif (env('APP_ENV') === 'local') {
+                $response['qr_availability_message'] = 'وضع التطوير: QR Code متاح في أي وقت';
             }
             
             return response()->json($response);
@@ -215,7 +224,23 @@ class QrCodeController extends Controller
             $user = auth()->user();
             if (!$user || (!$user->isAdmin() && $lesson->teacher_id !== $user->id)) {
                 abort(403);
-            }            // التحقق من إمكانية توليد QR في الوقت الحالي
+            }
+            
+            // في بيئة التطوير، السماح بتوليد QR في أي وقت
+            if (env('APP_ENV') === 'local' || env('APP_DEBUG') === true) {
+                $newToken = $lesson->forceGenerateQRToken();
+                
+                $remainingMinutes = (int)now()->diffInMinutes($newToken->expires_at);
+                
+                return response()->json([
+                    'success' => true,
+                    'message' => 'تم توليد رمز QR جديد للتجربة - صالح لمدة ساعة',
+                    'token_expires_at' => $newToken->expires_at->format('Y-m-d H:i:s'),
+                    'token_remaining_minutes' => $remainingMinutes
+                ]);
+            }
+            
+            // التحقق من إمكانية توليد QR في الوقت الحالي (للإنتاج فقط)
             if (!$lesson->canGenerateQR()) {
                 $timeUntil = $lesson->getTimeUntilQRGeneration();
                 $message = 'لا يمكن توليد QR Code إلا خلال وقت الدرس';
@@ -231,8 +256,11 @@ class QrCodeController extends Controller
                     'success' => false,
                     'message' => $message
                 ], 403);
-            }            $newToken = $lesson->generateQRCodeToken();
-              // حساب المدة المتبقية حتى نهاية الدرس
+            }
+
+            $newToken = $lesson->generateQRCodeToken();
+            
+            // حساب المدة المتبقية حتى نهاية الدرس
             $remainingMinutes = (int)now()->diffInMinutes($newToken->expires_at);
             
             return response()->json([
@@ -246,8 +274,43 @@ class QrCodeController extends Controller
             \Log::error('QR Refresh Error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'حدث خطأ في توليد QR جديد'
+                'message' => 'حدث خطأ في توليد QR جديد: ' . $e->getMessage()
             ], 500);
+        }
+    }
+
+    /**
+     * Quick QR generation for testing (bypasses time restrictions)
+     */
+    public function quickGenerate(Lesson $lesson)
+    {
+        try {
+            // التحقق من أن البيئة development
+            if (!app()->environment('local')) {
+                return response()->json(['error' => 'هذه الميزة متاحة فقط في بيئة التطوير'], 403);
+            }
+            
+            // إجبار توليد QR Token
+            $qrToken = $lesson->forceGenerateQRToken();
+            
+            // إنشاء QR Code
+            $scanUrl = url("/attendance/scan?token=" . urlencode($qrToken->token));
+            
+            $qrCode = QrCode::format('png')
+                ->size(300)
+                ->backend('GD')
+                ->errorCorrection('H')
+                ->generate($scanUrl);
+
+            return response($qrCode)
+                ->header('Content-Type', 'image/png')
+                ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
+                ->header('Pragma', 'no-cache')
+                ->header('Expires', '0');
+                
+        } catch (\Exception $e) {
+            \Log::error('Quick QR Generation Error: ' . $e->getMessage());
+            return response()->json(['error' => 'حدث خطأ في توليد QR Code: ' . $e->getMessage()], 500);
         }
     }
 

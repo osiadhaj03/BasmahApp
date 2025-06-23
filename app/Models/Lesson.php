@@ -216,6 +216,11 @@ class Lesson extends Model
      */
     public function canGenerateQR()
     {
+        // للتجربة والتطوير - السماح بتوليد QR في أي وقت
+        if (env('APP_ENV') === 'local' || env('APP_DEBUG') === true) {
+            return true;
+        }
+        
         // التحقق من وجود معلومات الدرس المطلوبة
         if (!$this->day_of_week || !$this->start_time || !$this->end_time) {
             return false;
@@ -239,8 +244,9 @@ class Lesson extends Model
         $lessonEnd = Carbon::createFromFormat('H:i', $this->end_time->format('H:i'));
         $lessonEnd->setDate($now->year, $now->month, $now->day);
         
-        // السماح بتوليد QR من بداية الدرس حتى نهايته
-        return $now->between($lessonStart, $lessonEnd);
+        // السماح بتوليد QR من 30 دقيقة قبل بداية الدرس حتى نهايته
+        $allowedStart = $lessonStart->copy()->subMinutes(30);
+        return $now->between($allowedStart, $lessonEnd);
     }/**
      * Get remaining time until QR generation is allowed
      */
@@ -376,5 +382,33 @@ class Lesson extends Model
         }
         
         return $token;
+    }
+
+    /**
+     * Force generate QR token for testing purposes
+     */
+    public function forceGenerateQRToken()
+    {
+        // حذف جميع التوكن القديمة لهذا الدرس
+        $this->qrTokens()->delete();
+        
+        // توليد token جديد
+        $tokenData = [
+            'lesson_id' => $this->id,
+            'timestamp' => now()->timestamp,
+            'random' => Str::random(12)
+        ];
+        
+        $encryptedToken = hash('sha256', json_encode($tokenData) . config('app.key'));
+        
+        // إنشاء QR token - صالح لمدة ساعة من الآن
+        $qrToken = $this->qrTokens()->create([
+            'token' => $encryptedToken,
+            'generated_at' => now(),
+            'expires_at' => now()->addHour(), // صالح لمدة ساعة
+            'used_at' => null,
+        ]);
+        
+        return $qrToken;
     }
 }

@@ -13,14 +13,14 @@ return new class extends Migration
         Schema::create('qr_tokens', function (Blueprint $table) {
             $table->id();
             $table->foreignId('lesson_id')->constrained()->onDelete('cascade');
-            $table->string('token', 255)->unique();
-            $table->timestamp('generated_at')->useCurrent();
+            $table->string('token')->unique();
+            $table->timestamp('generated_at')->nullable();
             $table->timestamp('expires_at')->nullable();
             $table->timestamp('used_at')->nullable();
             $table->timestamps();
             
-            $table->index(['lesson_id', 'token']);
-            $table->index('expires_at');
+            $table->index(['token', 'expires_at']);
+            $table->index(['lesson_id', 'expires_at']);
         });
     }
 

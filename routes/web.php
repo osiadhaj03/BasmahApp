@@ -107,3 +107,51 @@ Route::middleware('student')->group(function () {
 // Public QR Code Routes (accessible by both students and teachers)
 Route::get('/qr-generate/{lesson}', [QRCodeController::class, 'generateQR'])->name('qr.generate');
 Route::get('/attendance/scan', [QRCodeController::class, 'scanAttendance'])->name('attendance.scan');
+
+// API Routes
+Route::get('/api/lessons-simple', function() {
+        return \App\Models\Lesson::select('id', 'name', 'subject', 'day_of_week', 'start_time')
+            ->limit(20)
+            ->get()
+            ->map(function($lesson) {
+                return [
+                    'id' => $lesson->id,
+                    'name' => $lesson->name,
+                    'subject' => $lesson->subject,
+                    'day_of_week' => $lesson->day_of_week,
+                    'start_time' => $lesson->start_time ? $lesson->start_time->format('H:i') : 'غير محدد'
+                ];
+            });
+    });
+    
+    Route::get('/qr-test-page', function() {
+        return view('qr-test');
+    })->name('qr.test.page');
+
+// Testing Routes for QR Code (only in development)
+if (env('APP_ENV') === 'local') {
+    Route::get('/test-qr/{lesson}', function(\App\Models\Lesson $lesson) {
+        try {
+            // إجبار توليد QR Token
+            $qrToken = $lesson->forceGenerateQRToken();
+            
+            // إنشاء QR Code
+            $scanUrl = url("/attendance/scan?token=" . urlencode($qrToken->token));
+            
+            $qrCode = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')
+                ->size(300)
+                ->backend('GD')
+                ->errorCorrection('H')
+                ->generate($scanUrl);
+
+            return response($qrCode)
+                ->header('Content-Type', 'image/png');
+                
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    })->name('test.qr');
+    
+    Route::get('/quick-qr/{lesson}', [\App\Http\Controllers\QRCodeController::class, 'quickGenerate'])
+        ->name('quick.qr');
+}
