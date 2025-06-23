@@ -371,12 +371,12 @@
                                     </span>
                                 </td>
                                 <td>
-                                    <div class="btn-group" role="group">
-                                        <!-- QR Code -->
-                                        <a href="{{ route('admin.lessons.qr.generate', $lesson) }}" 
+                                    <div class="btn-group" role="group">                                        <!-- QR Code -->
+                                        <a href="{{ route('admin.lessons.qr.display', $lesson) }}" 
                                            class="btn btn-outline-success btn-sm" 
                                            title="QR Code للحضور"
-                                           data-bs-toggle="tooltip">
+                                           data-bs-toggle="tooltip"
+                                           target="_blank">
                                             <i class="fas fa-qrcode"></i>
                                         </a>
                                         

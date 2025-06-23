@@ -205,21 +205,39 @@ function updateQRDisplay(data) {
     const statusEl = document.getElementById('status-text');
     const timerEl = document.getElementById('countdown-timer');
     const alertEl = document.getElementById('token-status');
+    const refreshBtn = document.getElementById('refresh-btn');
     
-    if (data.has_valid_token) {
-        statusEl.textContent = 'QR Code نشط - صالح للاستخدام';
-        alertEl.className = 'alert alert-success';
-        timerEl.textContent = formatTime(data.token_remaining_minutes);
+    if (data.can_generate_qr) {
+        if (data.has_valid_token) {
+            statusEl.textContent = 'QR Code نشط - صالح للاستخدام';
+            alertEl.className = 'alert alert-success';
+            timerEl.textContent = formatTime(data.token_remaining_minutes);
+            refreshBtn.disabled = false;
+        } else {
+            statusEl.textContent = 'QR Code منتهي الصلاحية - يحتاج توليد جديد';
+            alertEl.className = 'alert alert-warning';
+            timerEl.textContent = '00:00';
+            refreshBtn.disabled = false;
+        }
     } else {
-        statusEl.textContent = 'QR Code منتهي الصلاحية - يحتاج توليد جديد';
-        alertEl.className = 'alert alert-warning';
-        timerEl.textContent = '00:00';
+        // QR غير متاح في الوقت الحالي
+        statusEl.textContent = data.qr_availability_message || 'QR Code غير متاح في الوقت الحالي';
+        alertEl.className = 'alert alert-info';
+        timerEl.textContent = '--:--';
+        refreshBtn.disabled = true;
+        refreshBtn.innerHTML = '<i class="fas fa-clock me-2"></i>غير متاح حالياً';
+        
+        if (data.minutes_until_available && data.minutes_until_available > 0) {
+            const hours = Math.floor(data.minutes_until_available / 60);
+            const mins = data.minutes_until_available % 60;
+            timerEl.textContent = `${hours}:${mins.toString().padStart(2, '0')} متبقي`;
+        }
     }
 }
 
 function loadQRImage() {
     const container = document.getElementById('qr-container');
-    if (tokenData && tokenData.qr_url) {
+    if (tokenData && tokenData.qr_url && tokenData.can_generate_qr) {
         container.innerHTML = `
             <img src="${tokenData.qr_url}?t=${Date.now()}" 
                  alt="QR Code" 
@@ -227,6 +245,8 @@ function loadQRImage() {
                  style="max-width: 300px;"
                  onerror="showErrorQR()">
         `;
+    } else if (!tokenData.can_generate_qr) {
+        showNotAvailableQR(tokenData.qr_availability_message);
     }
 }
 
@@ -237,6 +257,18 @@ function showExpiredQR() {
             <i class="fas fa-clock text-warning" style="font-size: 4rem;"></i>
             <h5 class="mt-3">QR Code منتهي الصلاحية</h5>
             <p class="text-muted">اضغط على "توليد QR جديد" للبدء</p>
+        </div>
+    `;
+    clearTimeout(currentTimer);
+}
+
+function showNotAvailableQR(message) {
+    const container = document.getElementById('qr-container');
+    container.innerHTML = `
+        <div class="text-center p-4">
+            <i class="fas fa-calendar-times text-info" style="font-size: 4rem;"></i>
+            <h5 class="mt-3">QR Code غير متاح</h5>
+            <p class="text-muted">${message || 'QR Code متاح فقط في أوقات الدرس المحددة'}</p>
         </div>
     `;
     clearTimeout(currentTimer);
