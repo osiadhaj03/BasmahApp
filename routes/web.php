@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AdminLoginController;
+use App\Http\Controllers\Auth\StudentRegisterController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\LessonController;
 use App\Http\Controllers\Admin\AttendanceController;
@@ -12,8 +13,32 @@ use App\Http\Controllers\Teacher\TeacherLessonController;
 use App\Http\Controllers\QRCodeController;
 
 Route::get('/', function () {
-    return view('welcome');
+    return view('welcome-premium');
+})->name('welcome.premium');
+
+Route::get('/welcome-simple', function () {
+    return view('welcome-simple');
+})->name('welcome.simple');
+
+Route::get('/welcome-premium', function () {
+    return view('welcome-premium');
+})->name('welcome.premium');
+
+// Legacy route for old welcome page
+Route::get('/welcome-basmah', function () {
+    return view('welcome-basmah');
 });
+
+// Student Registration Routes (Public - Students Only)
+Route::middleware('guest')->group(function () {
+    Route::get('/register', [StudentRegisterController::class, 'showRegistrationForm'])->name('student.register.form');
+    Route::post('/register', [StudentRegisterController::class, 'register'])->name('student.register');
+});
+
+// Default login route redirects to admin login
+Route::get('/login', function() {
+    return redirect()->route('admin.login');
+})->name('login');
 
 // Admin Authentication Routes
 Route::prefix('admin')->group(function () {
@@ -138,14 +163,13 @@ if (env('APP_ENV') === 'local') {
             // إنشاء QR Code
             $scanUrl = url("/attendance/scan?token=" . urlencode($qrToken->token));
             
-            $qrCode = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')
+            $qrCode = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')
                 ->size(300)
-                ->backend('GD')
                 ->errorCorrection('H')
                 ->generate($scanUrl);
 
             return response($qrCode)
-                ->header('Content-Type', 'image/png');
+                ->header('Content-Type', 'image/svg+xml');
                 
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);

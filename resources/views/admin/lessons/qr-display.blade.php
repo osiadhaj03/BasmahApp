@@ -188,9 +188,11 @@ function checkQRStatus() {
         .then(data => {
             tokenData = data;
             updateQRDisplay(data);
-            if (data.has_valid_token && data.token_remaining_minutes > 0) {
+            if (data.has_valid_token && data.can_generate_qr) {
                 loadQRImage();
-                startCountdown(data.token_remaining_minutes);
+                // في بيئة التطوير، استخدم 60 دقيقة إذا كان remaining = 0
+                const countdownMins = data.token_remaining_minutes > 0 ? data.token_remaining_minutes : 60;
+                startCountdown(countdownMins);
             } else {
                 showExpiredQR();
             }
@@ -211,13 +213,17 @@ function updateQRDisplay(data) {
         if (data.has_valid_token) {
             statusEl.textContent = 'QR Code نشط - صالح للاستخدام';
             alertEl.className = 'alert alert-success';
-            timerEl.textContent = formatTime(data.token_remaining_minutes);
+            // في بيئة التطوير، اعرض 60 دقيقة إذا كان remaining = 0
+            const remainingMins = data.token_remaining_minutes > 0 ? data.token_remaining_minutes : 60;
+            timerEl.textContent = formatTime(remainingMins);
             refreshBtn.disabled = false;
+            refreshBtn.innerHTML = '<i class="fas fa-sync-alt me-2"></i>توليد QR جديد';
         } else {
             statusEl.textContent = 'QR Code منتهي الصلاحية - يحتاج توليد جديد';
             alertEl.className = 'alert alert-warning';
             timerEl.textContent = '00:00';
             refreshBtn.disabled = false;
+            refreshBtn.innerHTML = '<i class="fas fa-sync-alt me-2"></i>توليد QR جديد';
         }
     } else {
         // QR غير متاح في الوقت الحالي
@@ -237,9 +243,11 @@ function updateQRDisplay(data) {
 
 function loadQRImage() {
     const container = document.getElementById('qr-container');
-    if (tokenData && tokenData.qr_url && tokenData.can_generate_qr) {
+    if (tokenData && tokenData.can_generate_qr) {
+        // في بيئة التطوير، استخدم quick-qr route
+        const qrUrl = `{{ url('/quick-qr/' . $lesson->id) }}?t=${Date.now()}`;
         container.innerHTML = `
-            <img src="${tokenData.qr_url}?t=${Date.now()}" 
+            <img src="${qrUrl}" 
                  alt="QR Code" 
                  class="img-fluid" 
                  style="max-width: 300px;"

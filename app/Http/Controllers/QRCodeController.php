@@ -47,14 +47,13 @@ class QrCodeController extends Controller
             // إنشاء QR Code يحتوي على رابط لمسح Token
             $scanUrl = url("/attendance/scan?token=" . urlencode($qrToken->token));
             
-            $qrCode = QrCode::format('png')
+            $qrCode = QrCode::format('svg')
                 ->size(300)
-                ->backend('GD')
                 ->errorCorrection('H')
                 ->generate($scanUrl);
 
             return response($qrCode)
-                ->header('Content-Type', 'image/png')
+                ->header('Content-Type', 'image/svg+xml')
                 ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
                 ->header('Pragma', 'no-cache')
                 ->header('Expires', '0');
@@ -195,7 +194,7 @@ class QrCodeController extends Controller
                 'token_expires_at' => $validToken ? $validToken->expires_at->format('Y-m-d H:i:s') : null,
                 'token_remaining_minutes' => $validToken ? max(0, (int)$validToken->expires_at->diffInMinutes(now())) : 0,
                 'students_count' => $lesson->students()->count(),
-                'qr_url' => ($validToken && $canGenerate) ? route('qr.generate', $lesson->id) : null
+                'qr_url' => $canGenerate ? route('quick.qr', $lesson->id) : null
             ];
 
             if (!$canGenerate && env('APP_ENV') !== 'local') {
@@ -296,14 +295,13 @@ class QrCodeController extends Controller
             // إنشاء QR Code
             $scanUrl = url("/attendance/scan?token=" . urlencode($qrToken->token));
             
-            $qrCode = QrCode::format('png')
+            $qrCode = QrCode::format('svg')
                 ->size(300)
-                ->backend('GD')
                 ->errorCorrection('H')
                 ->generate($scanUrl);
 
             return response($qrCode)
-                ->header('Content-Type', 'image/png')
+                ->header('Content-Type', 'image/svg+xml')
                 ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
                 ->header('Pragma', 'no-cache')
                 ->header('Expires', '0');

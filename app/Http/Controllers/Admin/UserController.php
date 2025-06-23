@@ -41,10 +41,9 @@ class UserController extends Controller
     public function create()
     {
         return view('admin.users.create');
-    }
-
-    /**
-     * حفظ مستخدم جديد
+    }    /**
+     * حفظ مستخدم جديد (للإدارة فقط)
+     * ملاحظة: هذا المتحكم محمي بـ middleware admin فقط المديرين يمكنهم إنشاء المعلمين
      */
     public function store(Request $request)
     {
@@ -53,6 +52,9 @@ class UserController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
             'role' => ['required', Rule::in(['admin', 'teacher', 'student'])],
+        ], [
+            'role.required' => 'يجب تحديد دور المستخدم',
+            'role.in' => 'دور المستخدم غير صحيح',
         ]);
 
         User::create([
@@ -60,10 +62,10 @@ class UserController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'role' => $request->role,
-        ]);
-
+        ]);        $roleText = $request->role === 'admin' ? 'مدير' : ($request->role === 'teacher' ? 'معلم' : 'طالب');
+        
         return redirect()->route('admin.users.index')
-            ->with('success', 'تم إنشاء المستخدم بنجاح');
+            ->with('success', "تم إنشاء {$roleText} جديد بنجاح: {$request->name}");
     }
 
     /**
