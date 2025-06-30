@@ -7,6 +7,9 @@ use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\LessonController;
 use App\Http\Controllers\Admin\AttendanceController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\BookController;
+use App\Http\Controllers\Admin\ArticleController;
+use App\Http\Controllers\Admin\NewsController;
 use App\Http\Controllers\Student\StudentController;
 use App\Http\Controllers\Teacher\TeacherDashboardController;
 use App\Http\Controllers\Teacher\TeacherLessonController;
@@ -77,6 +80,37 @@ Route::prefix('admin')->group(function () {
             ->name('admin.lessons.qr.info');
         Route::post('lessons/{lesson}/qr-refresh', [QRCodeController::class, 'refreshToken'])
             ->name('admin.lessons.qr.refresh');
+        
+        // Book Management Routes
+        Route::resource('books', BookController::class)->names('admin.books');
+        Route::post('books/{book}/toggle-featured', [BookController::class, 'toggleFeatured'])
+            ->name('admin.books.toggle-featured');
+        Route::post('books/{book}/toggle-published', [BookController::class, 'togglePublished'])
+            ->name('admin.books.toggle-published');
+        Route::get('books/{book}/download', [BookController::class, 'download'])
+            ->name('admin.books.download');
+        
+        // Article Management Routes
+        Route::resource('articles', ArticleController::class)->names('admin.articles');
+        Route::post('articles/{article}/toggle-featured', [ArticleController::class, 'toggleFeatured'])
+            ->name('admin.articles.toggle-featured');
+        Route::post('articles/{article}/toggle-published', [ArticleController::class, 'togglePublished'])
+            ->name('admin.articles.toggle-published');
+        Route::get('articles/{article}/preview', [ArticleController::class, 'preview'])
+            ->name('admin.articles.preview');
+        
+        // News Management Routes
+        Route::resource('news', NewsController::class)->names('admin.news');
+        Route::post('news/{news}/toggle-featured', [NewsController::class, 'toggleFeatured'])
+            ->name('admin.news.toggle-featured');
+        Route::post('news/{news}/toggle-published', [NewsController::class, 'togglePublished'])
+            ->name('admin.news.toggle-published');
+        Route::get('news/{news}/preview', [NewsController::class, 'preview'])
+            ->name('admin.news.preview');
+        Route::get('news-urgent', [NewsController::class, 'urgent'])
+            ->name('admin.news.urgent');
+        Route::get('news-expired', [NewsController::class, 'expired'])
+            ->name('admin.news.expired');
     });
 });
 

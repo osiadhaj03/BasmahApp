@@ -3,13 +3,20 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>BasmahApp - نظام إدارة الحضور</title>
+    <title>أنوار العلوم - المنصة التعليمية الإسلامية</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --islamic-gold: #d4a853;
+            --islamic-teal: #2c7a7b;
+            --islamic-off-white: #faf9f7;
+        }
+        
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--islamic-teal) 0%, var(--islamic-gold) 100%);
             min-height: 100vh;
             position: relative;
         }
@@ -25,17 +32,17 @@
             border: none;
             border-radius: 50px;
             padding: 10px 20px;
-            color: #667eea;
+            color: var(--islamic-teal);
             font-weight: 600;
             transition: all 0.3s ease;
             box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
         }
 
         .toggle-view-btn:hover {
-            background: #667eea;
+            background: var(--islamic-teal);
             color: white;
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 8px 25px rgba(44, 122, 123, 0.3);
         }
 
         .hero-section {
@@ -79,35 +86,35 @@
         }
         
         .btn-primary-custom {
-            background: linear-gradient(45deg, #667eea, #764ba2);
+            background: linear-gradient(45deg, var(--islamic-teal), var(--islamic-gold));
             color: white;
         }
         
         .btn-primary-custom:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 10px 30px rgba(44, 122, 123, 0.4);
             color: white;
         }
         
         .btn-success-custom {
-            background: linear-gradient(45deg, #56ab2f, #a8e6cf);
+            background: linear-gradient(45deg, var(--islamic-gold), #c49445);
             color: white;
         }
         
         .btn-success-custom:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(86, 171, 47, 0.4);
+            box-shadow: 0 10px 30px rgba(212, 168, 83, 0.4);
             color: white;
         }
         
         .btn-outline-custom {
-            border: 2px solid #667eea;
-            color: #667eea;
+            border: 2px solid var(--islamic-teal);
+            color: var(--islamic-teal);
             background: transparent;
         }
         
         .btn-outline-custom:hover {
-            background: #667eea;
+            background: var(--islamic-teal);
             color: white;
             transform: translateY(-2px);
         }
@@ -214,9 +221,9 @@
         <div class="hero-card text-center">
             <div class="mb-4">
                 <div class="feature-icon mx-auto mb-3 floating pulse" style="width: 80px; height: 80px; font-size: 2rem;">
-                    <i class="fas fa-graduation-cap"></i>
+                    <i class="fas fa-mosque"></i>
                 </div>
-                <h1 class="display-4 fw-bold text-gradient mb-3">BasmahApp</h1>
+                <h1 class="display-4 fw-bold text-gradient mb-3" style="font-family: 'Amiri', serif;">أنوار العلوم</h1>
                 <p class="lead text-muted mb-4">نظام إدارة الحضور الذكي للمؤسسات التعليمية</p>
                 
                 <!-- Quick Features Badge -->
@@ -358,7 +365,7 @@
                         <div class="col-md-6 text-md-start text-center mb-3 mb-md-0">
                             <p class="mb-1">
                                 <i class="fas fa-code me-2 text-primary"></i>
-                                <strong>نظام BasmahApp</strong> - إدارة الحضور الذكي
+                                <strong>منصة أنوار العلوم</strong> - المنصة التعليمية الإسلامية
                             </p>
                             <p class="mb-0">
                                 <i class="fas fa-calendar me-2 text-success"></i>

@@ -8,7 +8,7 @@
         <i class="fas fa-user-plus text-gradient" style="font-size: 3rem;"></i>
     </div>
     <h2 class="text-gradient mb-2">تسجيل طالب جديد</h2>
-    <p class="text-muted">أنشئ حسابك للانضمام إلى نظام BasmahApp</p>
+    <p class="text-muted" style="color: var(--islamic-dark-teal) !important;">أنشئ حسابك للانضمام إلى منصة أنوار العلوم</p>
 </div>
 
 <!-- Error messages -->
@@ -105,14 +105,14 @@
 <div class="text-center">
     <p class="mb-2">
         لديك حساب بالفعل؟ 
-        <a href="{{ route('admin.login') }}" class="text-decoration-none" style="color: #667eea;">
+        <a href="{{ route('admin.login') }}" class="text-decoration-none" style="color: var(--islamic-gold); font-weight: 600;">
             تسجيل الدخول
         </a>
     </p>
-    <hr>
-    <div class="alert-custom" style="background: rgba(255, 107, 107, 0.1);">
-        <p class="text-muted small mb-0">
-            <i class="fas fa-info-circle me-1"></i>
+    <hr style="border-color: var(--islamic-gold); opacity: 0.3;">
+    <div class="alert-custom">
+        <p class="text-muted small mb-0" style="color: var(--islamic-dark-teal) !important;">
+            <i class="fas fa-info-circle me-1" style="color: var(--islamic-gold);"></i>
             <strong>مهم:</strong> تسجيل الطلاب فقط - المعلمين يتم إنشاء حساباتهم من قبل الإدارة
         </p>
     </div>

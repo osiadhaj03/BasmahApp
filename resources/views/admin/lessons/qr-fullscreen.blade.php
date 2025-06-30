@@ -123,7 +123,7 @@
         <div class="mt-3">
             <small class="text-muted">
                 <i class="fas fa-shield-alt me-1"></i>
-                BasmahApp - نظام الحضور الذكي
+                أنوار العلوم - المنصة التعليمية الإسلامية
             </small>
         </div>
     </div>

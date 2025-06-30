@@ -27,6 +27,14 @@ class AdminController extends Controller
                 'totalLessons' => Lesson::count(),
                 'totalAttendances' => Attendance::count(),
                 'todayAttendances' => Attendance::whereDate('date', today())->count(),
+                
+                // Content Management Statistics
+                'totalBooks' => \App\Models\Book::count(),
+                'publishedBooks' => \App\Models\Book::where('is_published', true)->count(),
+                'totalArticles' => \App\Models\Article::count(),
+                'publishedArticles' => \App\Models\Article::where('is_published', true)->count(),
+                'totalNews' => \App\Models\News::count(),
+                'urgentNews' => \App\Models\News::where('priority', 'urgent')->count(),
             ];
             
             return view('admin.dashboard', compact('data', 'user'));

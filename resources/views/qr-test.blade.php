@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تجربة QR Code - BasmahApp</title>
+    <title>تجربة QR Code - أنوار العلوم</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -18,7 +18,7 @@
             <div class="col-12">
                 <div class="card lesson-card">
                     <div class="card-header bg-primary text-white text-center">
-                        <h3><i class="fas fa-qrcode me-2"></i>تجربة QR Code - BasmahApp</h3>
+                        <h3><i class="fas fa-qrcode me-2"></i>تجربة QR Code - أنوار العلوم</h3>
                         <p class="mb-0">اختر درس لتوليد QR Code فوري</p>
                     </div>
                     <div class="card-body">

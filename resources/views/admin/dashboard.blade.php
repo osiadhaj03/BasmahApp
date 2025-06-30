@@ -143,6 +143,113 @@
     @endif
 </div>
 
+<!-- Content Management Statistics (Admin Only) -->
+@if(auth()->user()->role === 'admin')
+<div class="row mb-4">
+    <div class="col-12">
+        <h5 class="text-muted mb-3">
+            <i class="fas fa-folder-open me-2"></i>إحصائيات إدارة المحتوى
+        </h5>
+    </div>
+    
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card bg-purple text-white" style="background: linear-gradient(135deg, #6f42c1, #5a32a3);">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <div class="text-white-50 small">الكتب</div>
+                        <div class="h4 mb-0">{{ $data['totalBooks'] ?? 0 }}</div>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-book fa-2x text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card bg-secondary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <div class="text-white-50 small">كتب منشورة</div>
+                        <div class="h4 mb-0">{{ $data['publishedBooks'] ?? 0 }}</div>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-check-circle fa-2x text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card text-white" style="background: linear-gradient(135deg, #e83e8c, #d91a72);">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <div class="text-white-50 small">المقالات</div>
+                        <div class="h4 mb-0">{{ $data['totalArticles'] ?? 0 }}</div>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-newspaper fa-2x text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <div class="text-white-50 small">مقالات منشورة</div>
+                        <div class="h4 mb-0">{{ $data['publishedArticles'] ?? 0 }}</div>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-globe fa-2x text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <div class="text-white-50 small">الأخبار</div>
+                        <div class="h4 mb-0">{{ $data['totalNews'] ?? 0 }}</div>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-bullhorn fa-2x text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card bg-danger text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <div class="text-white-50 small">أخبار عاجلة</div>
+                        <div class="h4 mb-0">{{ $data['urgentNews'] ?? 0 }}</div>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-exclamation-triangle fa-2x text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
+
 <!-- Quick Actions -->
 <div class="row">
     <div class="col-lg-8">
@@ -213,7 +320,7 @@
                 <hr>
                 
                 <div class="text-center">
-                    <h6 class="text-primary">BasmahApp</h6>
+                    <h6 class="text-primary">أنوار العلوم</h6>
                     <small class="text-muted">نظام إدارة الحضور الذكي</small>
                 </div>
             </div>

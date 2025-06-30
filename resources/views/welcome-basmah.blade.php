@@ -3,12 +3,18 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>BasmahApp - نظام إدارة الحضور الذكي الأكثر تطوراً</title>
+    <title>أنوار العلوم - قناة تعليمية إسلامية</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@300;400;600;700;900&display=swap');
+        
+        :root {
+            --islamic-gold: #d4a853;
+            --islamic-teal: #2c7a7b;
+            --islamic-off-white: #faf9f7;
+        }
         
         * {
             scroll-behavior: smooth;
@@ -18,9 +24,11 @@
             font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             overflow-x: hidden;
             background: #0a0a0a;
-        }        /* Hero Background with Animation */
+        }        
+        
+        /* Hero Background with Islamic Colors */
         .hero-section {
-            background: linear-gradient(-45deg, #1e3c72, #2a5298, #0066cc, #004499);
+            background: linear-gradient(-45deg, var(--islamic-teal), #2a7a7d, var(--islamic-gold), #c49445);
             background-size: 400% 400%;
             animation: gradientShift 15s ease infinite;
             min-height: 100vh;
@@ -40,9 +48,9 @@
             right: 0;
             bottom: 0;
             background: 
-                radial-gradient(circle at 20% 80%, rgba(30, 60, 114, 0.4) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(42, 82, 152, 0.4) 0%, transparent 50%),
-                radial-gradient(circle at 40% 40%, rgba(0, 102, 204, 0.4) 0%, transparent 50%);
+                radial-gradient(circle at 20% 80%, rgba(44, 122, 123, 0.4) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(212, 168, 83, 0.4) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(196, 148, 69, 0.4) 0%, transparent 50%);
             animation: pulse 4s ease-in-out infinite alternate;
         }
 
@@ -110,7 +118,7 @@
         }        .main-logo {
             width: 120px;
             height: 120px;
-            background: linear-gradient(135deg, #1e3c72, #2a5298, #0066cc);
+            background: linear-gradient(135deg, var(--islamic-teal), var(--islamic-gold), #c49445);
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -118,7 +126,7 @@
             font-size: 3rem;
             margin: 0 auto 2rem;
             animation: logoSpin 10s linear infinite, logoPulse 2s ease-in-out infinite alternate;
-            box-shadow: 0 20px 40px rgba(30, 60, 114, 0.4);
+            box-shadow: 0 20px 40px rgba(44, 122, 123, 0.4);
         }
 
         @keyframes logoSpin {
@@ -130,9 +138,10 @@
             0% { transform: scale(1); }
             100% { transform: scale(1.05); }
         }        .main-title {
+            font-family: 'Amiri', serif;
             font-size: 4rem;
-            font-weight: 900;
-            background: linear-gradient(45deg, #fff, #87ceeb, #1e3c72);
+            font-weight: 700;
+            background: linear-gradient(45deg, #fff, var(--islamic-gold), var(--islamic-teal));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -143,7 +152,7 @@
 
         @keyframes titleGlow {
             0% { text-shadow: 0 0 20px rgba(255, 255, 255, 0.5); }
-            100% { text-shadow: 0 0 40px rgba(255, 255, 255, 0.8), 0 0 60px rgba(30, 60, 114, 0.6); }
+            100% { text-shadow: 0 0 40px rgba(255, 255, 255, 0.8), 0 0 60px rgba(212, 168, 83, 0.6); }
         }
 
         .main-subtitle {
@@ -196,7 +205,7 @@
         .feature-icon {
             width: 80px;
             height: 80px;
-            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            background: linear-gradient(135deg, var(--islamic-teal), var(--islamic-gold));
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -242,9 +251,9 @@
             text-transform: uppercase;
             letter-spacing: 1px;
         }        .btn-primary-custom {
-            background: linear-gradient(45deg, #1e3c72, #2a5298);
+            background: linear-gradient(45deg, var(--islamic-teal), var(--islamic-gold));
             color: white;
-            box-shadow: 0 10px 30px rgba(30, 60, 114, 0.5);
+            box-shadow: 0 10px 30px rgba(44, 122, 123, 0.5);
         }
 
         .btn-primary-custom::before {
@@ -254,7 +263,7 @@
             left: -100%;
             width: 100%;
             height: 100%;
-            background: linear-gradient(45deg, #2a5298, #0066cc);
+            background: linear-gradient(45deg, var(--islamic-gold), #c49445);
             transition: left 0.4s ease;
             z-index: -1;
         }
@@ -265,19 +274,19 @@
 
         .btn-primary-custom:hover {
             transform: translateY(-3px);
-            box-shadow: 0 15px 40px rgba(30, 60, 114, 0.7);
+            box-shadow: 0 15px 40px rgba(212, 168, 83, 0.7);
             color: white;
         }
 
         .btn-success-custom {
-            background: linear-gradient(45deg, #0066cc, #87ceeb);
+            background: linear-gradient(45deg, var(--islamic-gold), #c49445);
             color: white;
-            box-shadow: 0 10px 30px rgba(0, 102, 204, 0.5);
+            box-shadow: 0 10px 30px rgba(212, 168, 83, 0.5);
         }
 
         .btn-success-custom:hover {
             transform: translateY(-3px);
-            box-shadow: 0 15px 40px rgba(0, 102, 204, 0.7);
+            box-shadow: 0 15px 40px rgba(212, 168, 83, 0.7);
             color: white;
         }
 
@@ -400,9 +409,9 @@
                 <!-- Main Logo & Title -->
                 <div class="text-center mb-5">
                     <div class="main-logo" data-aos="zoom-in" data-aos-delay="200">
-                        <i class="fas fa-graduation-cap"></i>
+                        <i class="fas fa-mosque"></i>
                     </div>
-                    <h1 class="main-title" data-aos="fade-up" data-aos-delay="400">BasmahApp</h1>
+                    <h1 class="main-title" data-aos="fade-up" data-aos-delay="400">أنوار العلوم</h1>
                     <p class="main-subtitle" data-aos="fade-up" data-aos-delay="600">
                         نظام إدارة الحضور الذكي الأكثر تطوراً في المنطقة العربية
                     </p>
@@ -641,7 +650,7 @@
         <div class="container">
             <div class="row">                <div class="col-md-6" data-aos="fade-right">
                     <h5 style="color: #2a5298; margin-bottom: 1rem;">
-                        <i class="fas fa-code me-2"></i>نظام BasmahApp
+                        <i class="fas fa-mosque me-2"></i>منصة أنوار العلوم
                     </h5>
                     <p style="color: rgba(255, 255, 255, 0.8); margin-bottom: 0.5rem;">
                         نظام إدارة الحضور الأكثر تطوراً وأماناً في المنطقة العربية
@@ -780,7 +789,7 @@
         // Performance monitoring
         window.addEventListener('load', function() {
             const loadTime = performance.now();
-            console.log(`✅ BasmahApp loaded in ${Math.round(loadTime)}ms`);
+            console.log(`✅ أنوار العلوم loaded in ${Math.round(loadTime)}ms`);
         });
     </script>
 </body>

@@ -3,14 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BasmahApp - نظام إدارة الحضور الذكي</title>
+    <title>أنوار العلوم - المنصة التعليمية الإسلامية</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --islamic-gold: #d4a853;
+            --islamic-teal: #2c7a7b;
+            --islamic-off-white: #faf9f7;
+        }
+        
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--islamic-teal) 0%, var(--islamic-gold) 100%);
             min-height: 100vh;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         .welcome-card {
             background: rgba(255, 255, 255, 0.95);
@@ -37,6 +44,8 @@
             justify-content: center;
             margin: 0 auto 20px;
             font-size: 2rem;
+            background: linear-gradient(135deg, var(--islamic-teal), var(--islamic-gold));
+            color: white;
         }
     </style>
 </head>
@@ -48,9 +57,9 @@
                     <!-- Header -->
                     <div class="text-center mb-5">
                         <div class="feature-icon bg-primary text-white mx-auto mb-3">
-                            <i class="fas fa-graduation-cap"></i>
+                            <i class="fas fa-mosque"></i>
                         </div>
-                        <h1 class="display-4 fw-bold text-primary mb-3">BasmahApp</h1>
+                        <h1 class="display-4 fw-bold mb-3" style="font-family: 'Amiri', serif; color: var(--islamic-teal);">أنوار العلوم</h1>
                         <p class="lead text-muted">نظام إدارة الحضور الذكي</p>
                     </div>
 

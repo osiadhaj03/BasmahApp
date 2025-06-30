@@ -134,7 +134,7 @@
 
     <div class="bg-white rounded-lg shadow p-6">
         <h3 class="text-lg font-medium text-gray-900 mb-4">
-            مرحباً بك في نظام BasmahApp لإدارة الحضور
+            مرحباً بك في منصة أنوار العلوم التعليمية
         </h3>
         <p class="text-gray-600 mb-4">
             @if(auth()->user()->role === 'admin')
