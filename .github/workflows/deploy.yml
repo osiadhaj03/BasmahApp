@@ -1,0 +1,30 @@
+name: Deploy to Hostinger
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Connect to Hostinger & Deploy
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: 46.202.156.118
+          username: u994369532
+          key: ${{ secrets.HOSTINGER_SSH_KEY }}
+          port: 65002
+          script: |
+            cd ~/basmah
+            git pull origin main
+            composer install --no-dev --optimize-autoloader
+            php artisan migrate --force
+            php artisan config:clear
+            php artisan view:clear
+            php artisan route:clear
+            cp -r ~/basmah/public/* ~/public_html/
