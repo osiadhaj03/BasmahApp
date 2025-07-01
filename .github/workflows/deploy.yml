@@ -20,11 +20,39 @@ jobs:
           key: ${{ secrets.HOSTINGER_SSH_KEY }}
           port: 65002
           script: |
+            echo "🚀 Starting deployment..."
             cd ~/basmah
+            
+            echo "📥 Pulling latest changes..."
             git pull origin main
-            composer install --no-dev --optimize-autoloader
+            
+            echo "📦 Installing dependencies..."
+            composer install --no-dev --optimize-autoloader --no-interaction
+            
+            echo "🔧 Running Laravel commands..."
+            php artisan down --message="نظام قيد التحديث، سنعود قريباً" --retry=60
+            
+            echo "🗃️ Running migrations..."
             php artisan migrate --force
+            
+            echo "🧹 Clearing caches..."
             php artisan config:clear
             php artisan view:clear
             php artisan route:clear
-            cp -r ~/basmah/public/* ~/public_html/
+            php artisan cache:clear
+            
+            echo "⚡ Optimizing for production..."
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+            
+            echo "📁 Syncing public files..."
+            rsync -av --delete ~/basmah/public/ ~/public_html/
+            
+            echo "🔗 Creating storage link..."
+            php artisan storage:link
+            
+            echo "✅ Bringing site back up..."
+            php artisan up
+            
+            echo "🎉 Deployment completed successfully!"
