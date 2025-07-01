@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AdminLoginController;
 use App\Http\Controllers\Auth\StudentRegisterController;
 use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\LessonController;
 use App\Http\Controllers\Admin\AttendanceController;
 use App\Http\Controllers\Admin\UserController;
@@ -15,7 +16,63 @@ use App\Http\Controllers\Teacher\TeacherDashboardController;
 use App\Http\Controllers\Teacher\TeacherLessonController;
 use App\Http\Controllers\QRCodeController;
 
-Route::get('/', function () {
+// إضافة Controllers الواجهة العامة
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\CoursesController;
+use App\Http\Controllers\LessonsController;
+use App\Http\Controllers\ScholarsController;
+use App\Http\Controllers\CategoriesController;
+
+// إضافة Controllers لوحة التحكم - نظام الدورات
+use App\Http\Controllers\Admin\ScholarController;
+use App\Http\Controllers\Admin\CourseCategoryController;
+use App\Http\Controllers\Admin\CourseController;
+use App\Http\Controllers\Admin\CourseLessonController;
+
+/*
+|--------------------------------------------------------------------------
+| الصفحات العامة للزوار (نظام إدارة الدورات)
+|--------------------------------------------------------------------------
+*/
+
+// الصفحة الرئيسية
+Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/about', [HomeController::class, 'about'])->name('about');
+
+// البحث العام
+Route::get('/search', [HomeController::class, 'search'])->name('search');
+Route::get('/advanced-search', [HomeController::class, 'advancedSearch'])->name('advanced-search');
+Route::get('/search-suggestions', [HomeController::class, 'searchSuggestions'])->name('search.suggestions');
+
+// الأقسام
+Route::get('/categories', [CategoriesController::class, 'index'])->name('categories.index');
+Route::get('/categories/{category}', [CategoriesController::class, 'show'])->name('categories.show');
+
+// العلماء
+Route::get('/scholars', [ScholarsController::class, 'index'])->name('scholars.index');
+Route::get('/scholars/{scholar}', [ScholarsController::class, 'show'])->name('scholars.show');
+Route::get('/scholars/specialization/{specialization}', [ScholarsController::class, 'specialization'])->name('scholars.specialization');
+Route::get('/scholars/search', [ScholarsController::class, 'search'])->name('scholars.search');
+
+// الدورات
+Route::get('/courses', [CoursesController::class, 'index'])->name('courses.index');
+Route::get('/courses/{course}', [CoursesController::class, 'show'])->name('courses.show');
+Route::get('/courses/category/{category}', [CoursesController::class, 'category'])->name('courses.category');
+Route::get('/courses/search', [CoursesController::class, 'search'])->name('courses.search');
+
+// الدروس
+Route::get('/lessons', [LessonsController::class, 'index'])->name('lessons.index');
+Route::get('/courses/{course}/lessons/{lesson}', [LessonsController::class, 'show'])->name('lessons.show');
+Route::post('/lessons/{lesson}/play', [LessonsController::class, 'play'])->name('lessons.play');
+Route::get('/lessons/{lesson}/resource/{resourceIndex}', [LessonsController::class, 'downloadResource'])->name('lessons.download-resource');
+
+/*
+|--------------------------------------------------------------------------
+| الصفحات الأصلية للمشروع
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/welcome-premium', function () {
     return view('welcome-premium');
 })->name('welcome.premium');
 
@@ -51,7 +108,7 @@ Route::prefix('admin')->group(function () {
     
     // Protected Admin Routes
     Route::middleware('admin')->group(function () {
-        Route::get('dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
+        Route::get('dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
         
         // User Management Routes
         Route::resource('users', UserController::class)->names('admin.users');
@@ -166,6 +223,71 @@ Route::middleware('student')->group(function () {
 // Public QR Code Routes (accessible by both students and teachers)
 Route::get('/qr-generate/{lesson}', [QRCodeController::class, 'generateQR'])->name('qr.generate');
 Route::get('/attendance/scan', [QRCodeController::class, 'scanAttendance'])->name('attendance.scan');
+
+/*
+|--------------------------------------------------------------------------
+| لوحة التحكم لإدارة نظام الدورات
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function () {
+    
+    // إدارة العلماء
+    Route::resource('scholars', \App\Http\Controllers\Admin\ScholarController::class);
+    Route::post('scholars/{scholar}/toggle-status', [\App\Http\Controllers\Admin\ScholarController::class, 'toggleStatus'])
+        ->name('scholars.toggle-status');
+    Route::post('scholars/{scholar}/duplicate', [\App\Http\Controllers\Admin\ScholarController::class, 'duplicate'])
+        ->name('scholars.duplicate');
+    Route::get('scholars/{scholar}/courses', [\App\Http\Controllers\Admin\ScholarController::class, 'courses'])
+        ->name('scholars.courses');
+    
+    // إدارة أقسام الدورات
+    Route::resource('course-categories', \App\Http\Controllers\Admin\CourseCategoryController::class);
+    Route::post('course-categories/{courseCategory}/toggle-status', [\App\Http\Controllers\Admin\CourseCategoryController::class, 'toggleStatus'])
+        ->name('course-categories.toggle-status');
+    Route::post('course-categories/{courseCategory}/duplicate', [\App\Http\Controllers\Admin\CourseCategoryController::class, 'duplicate'])
+        ->name('course-categories.duplicate');
+    Route::get('course-categories/{courseCategory}/courses', [\App\Http\Controllers\Admin\CourseCategoryController::class, 'courses'])
+        ->name('course-categories.courses');
+    
+    // إدارة الدورات
+    Route::resource('courses', \App\Http\Controllers\Admin\CourseController::class);
+    Route::post('courses/{course}/toggle-status', [\App\Http\Controllers\Admin\CourseController::class, 'toggleStatus'])
+        ->name('courses.toggle-status');
+    Route::post('courses/{course}/duplicate', [\App\Http\Controllers\Admin\CourseController::class, 'duplicate'])
+        ->name('courses.duplicate');
+    Route::get('courses/{course}/lessons', [\App\Http\Controllers\Admin\CourseController::class, 'lessons'])
+        ->name('courses.lessons');
+    Route::post('courses/{course}/lessons/reorder', [\App\Http\Controllers\Admin\CourseController::class, 'reorderLessons'])
+        ->name('courses.lessons.reorder');
+    
+    // إدارة الدروس
+    Route::resource('course-lessons', \App\Http\Controllers\Admin\CourseLessonController::class);
+    Route::post('course-lessons/{courseLesson}/toggle-status', [\App\Http\Controllers\Admin\CourseLessonController::class, 'toggleStatus'])
+        ->name('course-lessons.toggle-status');
+    Route::post('course-lessons/{courseLesson}/duplicate', [\App\Http\Controllers\Admin\CourseLessonController::class, 'duplicate'])
+        ->name('course-lessons.duplicate');
+    Route::post('course-lessons/reorder', [\App\Http\Controllers\Admin\CourseLessonController::class, 'reorder'])
+        ->name('course-lessons.reorder');
+    
+    // إدارة الدروس مرتبطة بالدورات
+    Route::prefix('courses/{course}')->name('courses.')->group(function () {
+        Route::get('lessons/create', [\App\Http\Controllers\Admin\CourseLessonController::class, 'createForCourse'])
+            ->name('lessons.create');
+        Route::post('lessons', [\App\Http\Controllers\Admin\CourseLessonController::class, 'storeForCourse'])
+            ->name('lessons.store');
+        Route::get('lessons/{lesson}/edit', [\App\Http\Controllers\Admin\CourseLessonController::class, 'editForCourse'])
+            ->name('lessons.edit');
+        Route::put('lessons/{lesson}', [\App\Http\Controllers\Admin\CourseLessonController::class, 'updateForCourse'])
+            ->name('lessons.update');
+        Route::delete('lessons/{lesson}', [\App\Http\Controllers\Admin\CourseLessonController::class, 'destroyForCourse'])
+            ->name('lessons.destroy');
+    });
+    
+    // تقارير ونظرة عامة على نظام الدورات
+    Route::get('courses-overview', function() {
+        return view('admin.courses.overview');
+    })->name('courses.overview');
+});
 
 // API Routes
 Route::get('/api/lessons-simple', function() {
