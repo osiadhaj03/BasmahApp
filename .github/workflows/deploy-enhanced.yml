@@ -1,0 +1,161 @@
+# 🔧 إعدادات GitHub Actions المحسنة
+
+name: 🚀 Deploy to Hostinger
+
+on:
+  push:
+    branches: [ main ]
+    paths-ignore:
+      - 'README.md'
+      - 'DEPLOYMENT_GUIDE.md'
+      - '*.md'
+  workflow_dispatch: # يسمح بالتشغيل اليدوي
+
+env:
+  DEPLOY_PATH: /home/u994369532/basmah
+  PUBLIC_PATH: /home/u994369532/public_html
+
+jobs:
+  deploy:
+    name: 🌐 Deploy to Production
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+    - name: 📋 Checkout Repository
+      uses: actions/checkout@v4
+      
+    - name: 🔍 Check for Laravel Project
+      run: |
+        if [ ! -f "artisan" ]; then
+          echo "❌ This is not a Laravel project!"
+          exit 1
+        fi
+        echo "✅ Laravel project detected"
+    
+    - name: 🚀 Deploy to Hostinger
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: 46.202.156.118
+        username: u994369532
+        key: ${{ secrets.HOSTINGER_SSH_KEY }}
+        port: 65002
+        timeout: 300s
+        script_stop: true
+        script: |
+          set -e  # Exit on any error
+          
+          echo "🎯 Starting deployment for commit: $GITHUB_SHA"
+          echo "📅 Deployment time: $(date)"
+          
+          # إنشاء backup قبل التحديث
+          echo "💾 Creating backup..."
+          BACKUP_DIR="$HOME/backups"
+          mkdir -p $BACKUP_DIR
+          BACKUP_FILE="backup_$(date +%Y%m%d_%H%M%S).tar.gz"
+          tar -czf "$BACKUP_DIR/$BACKUP_FILE" -C $HOME basmah public_html || echo "⚠️ Backup failed, continuing..."
+          
+          # الانتقال لمجلد المشروع
+          cd ${{ env.DEPLOY_PATH }}
+          
+          # التحقق من حالة Git
+          echo "📥 Fetching latest changes..."
+          git fetch origin main
+          
+          # التحقق من وجود تغييرات
+          LOCAL=$(git rev-parse HEAD)
+          REMOTE=$(git rev-parse origin/main)
+          
+          if [ "$LOCAL" = "$REMOTE" ]; then
+            echo "ℹ️ No new changes detected"
+            exit 0
+          fi
+          
+          echo "🔄 New changes detected, updating..."
+          
+          # وضع الموقع في وضع الصيانة
+          echo "🛠️ Enabling maintenance mode..."
+          php artisan down --message="نظام قيد التحديث، سنعود خلال دقائق" --retry=60 || echo "⚠️ Could not enable maintenance mode"
+          
+          # سحب آخر التحديثات
+          echo "📦 Pulling latest code..."
+          git reset --hard origin/main
+          
+          # تحديث Composer dependencies
+          echo "📚 Updating dependencies..."
+          composer install --no-dev --optimize-autoloader --no-interaction --quiet
+          
+          # تشغيل migrations
+          echo "🗃️ Running database migrations..."
+          php artisan migrate --force --no-interaction
+          
+          # مسح الـ cache
+          echo "🧹 Clearing caches..."
+          php artisan config:clear
+          php artisan view:clear
+          php artisan route:clear
+          php artisan cache:clear
+          
+          # إعادة بناء الـ cache للإنتاج
+          echo "⚡ Building production cache..."
+          php artisan config:cache
+          php artisan route:cache
+          php artisan view:cache
+          
+          # تحديث ملفات الـ public
+          echo "📁 Syncing public files..."
+          rsync -av --delete --exclude=".htaccess" ${{ env.DEPLOY_PATH }}/public/ ${{ env.PUBLIC_PATH }}/
+          
+          # إنشاء symbolic link للـ storage
+          echo "🔗 Creating storage link..."
+          php artisan storage:link || echo "⚠️ Storage link already exists"
+          
+          # التأكد من الـ permissions
+          echo "🔐 Setting permissions..."
+          find ${{ env.DEPLOY_PATH }}/storage -type f -exec chmod 644 {} \;
+          find ${{ env.DEPLOY_PATH }}/storage -type d -exec chmod 755 {} \;
+          find ${{ env.DEPLOY_PATH }}/bootstrap/cache -type f -exec chmod 644 {} \;
+          find ${{ env.DEPLOY_PATH }}/bootstrap/cache -type d -exec chmod 755 {} \;
+          
+          # اختبار سريع للتأكد من عمل Laravel
+          echo "🧪 Testing Laravel..."
+          php artisan --version
+          
+          # إيقاف وضع الصيانة
+          echo "✅ Disabling maintenance mode..."
+          php artisan up
+          
+          echo "🎉 Deployment completed successfully!"
+          echo "📊 Final commit: $(git log -1 --pretty=format:'%h - %s (%an)')"
+          echo "⏰ Deployment finished at: $(date)"
+          
+          # تنظيف ملفات الـ backup القديمة (الاحتفاظ بآخر 5)
+          cd $BACKUP_DIR
+          ls -t backup_*.tar.gz 2>/dev/null | tail -n +6 | xargs rm -f || echo "ℹ️ No old backups to clean"
+
+  # إشعار عند النجاح
+  notify-success:
+    name: 📢 Notify Success
+    needs: deploy
+    runs-on: ubuntu-latest
+    if: success()
+    steps:
+    - name: 🎉 Success Notification
+      run: |
+        echo "✅ Deployment completed successfully!"
+        echo "🌐 Website: https://anwaralolmaa.com"
+        echo "📊 Commit: $GITHUB_SHA"
+        echo "👨‍💻 Author: $GITHUB_ACTOR"
+
+  # إشعار عند الفشل  
+  notify-failure:
+    name: 📢 Notify Failure
+    needs: deploy
+    runs-on: ubuntu-latest
+    if: failure()
+    steps:
+    - name: ❌ Failure Notification
+      run: |
+        echo "❌ Deployment failed!"
+        echo "🔍 Check the logs above for details"
+        echo "💡 The website should still be working with the previous version"
